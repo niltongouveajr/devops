@@ -1,0 +1,74 @@
+---
+
+# Tasks file to "update_authorized_keys_file"
+
+# Start
+
+ - name: "update_authorized_keys_file: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: SSH_BACKUP_DATE
+
+# Check Session 
+
+ - name: "update_authorized_keys_file: Check if {{ROOT_SSH_AUTH_KEYS_FILE}} exist on root"
+   shell:
+     ls /root/.ssh/authorized_keys | wc -l
+   register: CHECK_ROOT_AUTH_KEYS_FILE
+
+ - name: "update_authorized_keys_file: Check if {{DEVOPS_SSH_AUTH_KEYS_FILE}} exist on devops"
+   shell:
+     ls /home/devops/.ssh/authorized_keys | wc -l
+   register: CHECK_DEVOPS_AUTH_KEYS_FILE
+
+# Backup Session 
+
+ - name: "update_authorized_keys_file: Backup Root's authorized_keys file"
+   shell:
+     cp {{ROOT_SSH_AUTH_KEYS_FILE}} {{ROOT_SSH_AUTH_KEYS_FILE}}.bck-{{SSH_BACKUP_DATE.stdout}}
+   when: 'CHECK_ROOT_AUTH_KEYS_FILE.stdout == "1"'
+
+ - name: "update_authorized_keys_file: Backup Devops' authorized_keys file"
+   shell:
+     cp {{DEVOPS_SSH_AUTH_KEYS_FILE}} {{DEVOPS_SSH_AUTH_KEYS_FILE}}.bck-{{SSH_BACKUP_DATE.stdout}}
+   when: 'CHECK_DEVOPS_AUTH_KEYS_FILE.stdout == "1"'
+
+# Run Session 
+
+ - name: "update_authorized_keys_file: Copy from authorized_keys.j2 to {{ROOT_SSH_AUTH_KEYS_FILE}}"
+   template:
+     src=templates/authorized_keys.j2
+     dest={{ROOT_SSH_AUTH_KEYS_FILE}}
+     mode=0644
+
+ - name: "update_authorized_keys_file: Copy from authorized_keys.j2 to {{DEVOPS_SSH_AUTH_KEYS_FILE}}"
+   template:
+     src=templates/authorized_keys.j2
+     dest={{DEVOPS_SSH_AUTH_KEYS_FILE}}
+     mode=0644
+
+# Remove Trash Session
+
+ - name: "update_authorized_keys_file: List {{ROOT_SSH_AUTH_KEYS_FILE}} old backups"
+   shell:
+     ls -la /root/.ssh/ | grep -e "authorized_keys.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_ROOT_AUTH_KEYS_OLD_BCK
+
+ - name: "update_authorized_keys_file: List {{DEVOPS_SSH_AUTH_KEYS_FILE}} old backups"
+   shell:
+     ls -la /home/devops/.ssh/ | grep -e "authorized_keys.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_DEVOPS_AUTH_KEYS_OLD_BCK
+
+ - name: "update_authorized_keys_file: Remove {{ROOT_SSH_AUTH_KEYS_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /root/.ssh/authorized_keys.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_ROOT_AUTH_KEYS_OLD_BCK.stdout > 2'
+
+ - name: "update_authorized_keys_file: Remove {{DEVOPS_SSH_AUTH_KEYS_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /home/devops/.ssh/authorized_keys.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_DEVOPS_AUTH_KEYS_OLD_BCK.stdout > 2'

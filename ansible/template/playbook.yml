@@ -1,0 +1,19 @@
+---
+
+# Ansible Playbook for Development Environment
+
+- hosts: development
+  remote_user: root
+
+  pre_tasks:
+#    - shell: echo 'pre-tasks'
+
+  roles:
+    - { role: role_name, tags: ["role_name"] }
+
+  tasks:
+#    - shell: echo 'tasks'
+
+  post_tasks:
+#    - shell: echo 'post-tasks'
+

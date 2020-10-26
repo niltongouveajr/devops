@@ -1,0 +1,13 @@
+{
+  "jira.server.url" : "http://jira.local",
+  "jira.auth.token" : "<hash>",
+  "jira.notify.email" : "true",
+  "jira.issue.patterns" : [
+    "\\b(\\S+-\\d+)\\b",
+    "(\\[\\S+-\\d+\\])",
+    "(\\(\\S+-\\d+\\))",
+    "(\\[JIRA\\s+\\S+-\\d+\\])"
+  ],
+  "git.cmd.path" : "git",
+  "git.web" : "https://gitlab.local/{0}/commit/{1}"
+}

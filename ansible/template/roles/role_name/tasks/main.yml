@@ -1,0 +1,6 @@
+---
+
+# Main tasks file for this role
+
+- include_tasks: "install_packages.yml"
+  tags: ["install_package"]

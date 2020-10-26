@@ -1,0 +1,34 @@
+---
+
+# Tasks file to "create_user_devops"
+ 
+ - name: "create_user_devops: Check if user devops already exist"
+   shell: ls /home | grep devops | wc -l
+   register: CHECK_IF_USER_DEVOPS_ALREADY_EXIST
+
+ - name: "create_user_devops: create user devops"
+   user:
+     name: devops
+     shell: /bin/bash
+     home: /home/devops
+     password: <shadow-hash>
+     groups:
+      - adm
+      - cdrom
+      - sudo
+      - dip
+      - plugdev
+      - lpadmin
+      - sambashare
+     generate_ssh_key: yes
+   when: 'CHECK_IF_USER_DEVOPS_ALREADY_EXIST.stdout == "0"'
+
+ - name: "create_user_devops: copy ssh public key from tools to devops user"
+   shell:
+     cp -pr /home/tools/.ssh/id_rsa.pub /home/devops/.ssh/id_rsa.pub
+   when: 'CHECK_IF_USER_DEVOPS_ALREADY_EXIST.stdout == "0"' 
+ 
+ - name: "create_user_devops: copy ssh private key from tools to devops user"
+   shell:
+     cp -pr /home/tools/.ssh/id_rsa /home/devops/.ssh/id_rsa
+   when: 'CHECK_IF_USER_DEVOPS_ALREADY_EXIST.stdout == "0"'

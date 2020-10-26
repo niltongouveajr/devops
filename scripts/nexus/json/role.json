@@ -1,0 +1,5 @@
+{
+"name": "role",
+"type": "groovy",
+"content": "import groovy.json.JsonSlurper; parsed_args = new JsonSlurper().parseText(args); import org.sonatype.nexus.security.SecuritySystem; security.addRole(parsed_args.roleadgroup, parsed_args.roleadgroup, '', ['nx-repository-view-docker-docker-hub-*','nx-repository-view-docker-docker-' + parsed_args.rolecustomer + '-group-*','nx-repository-view-docker-docker-' + parsed_args.rolecustomer + '-hosted-*'], [])"
+}

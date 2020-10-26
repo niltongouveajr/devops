@@ -1,0 +1,211 @@
+---
+
+# Tasks file to "increase_webserver_security"
+
+ - name: "increase_webserver_security: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "increase_webserver_security: Check if {{ETC_APACHE2_SECURITY_FILE}} exist on server"
+   shell:
+     ls /etc/apache2/conf-available/security.conf | wc -l
+   register: CHECK_APACHE2_SECURITY_FILE
+ 
+ - name: "increase_webserver_security: Check if {{ETC_PHP5_FILE}} exist on server"
+   shell:
+     ls /etc/php5/apache2/php.ini | wc -l
+   register: CHECK_PHP5_FILE
+
+ - name: "increase_webserver_security: Check if {{ETC_PHP7_FILE}} exist on server"
+   shell:
+     ls /etc/php/7.0/apache2/php.ini | wc -l
+   register: CHECK_PHP7_FILE
+
+ - name: "increase_webserver_security: Check if {{ETC_APACHE2_SSL_FILE}} exist on server"
+   shell:
+     ls /etc/apache2/mods-available/ssl.conf | wc -l
+   register: CHECK_APACHE2_SSL_FILE
+
+ - name: "increase_webserver_security: Check if {{ETC_NGINX_FILE}} exist on server"
+   shell:
+     ls /etc/nginx/nginx.conf | wc -l
+   register: CHECK_NGINX_FILE
+
+ - name: "increase_webserver_security: Check if package apache2 is installed"
+   shell:
+     dpkg-query -W -f='${Status}' apache2
+   ignore_errors: true
+   register: CHECK_APACHE2_PKG_INSTALLED
+
+ - name: "increase_webserver_security: Check if package php5 is installed"
+   shell:
+     dpkg-query -W -f='${Status}' php5
+   ignore_errors: true
+   register: CHECK_PHP5_PKG_INSTALLED
+
+ - name: "increase_webserver_security: Check if package php7 is installed"
+   shell:
+     dpkg-query -W -f='${Status}' php7.0
+   ignore_errors: true
+   register: CHECK_PHP7_PKG_INSTALLED
+
+ - name: "increase_webserver_security: Check if package nginx is installed"
+   shell:
+     dpkg-query -W -f='${Status}' nginx-common
+   ignore_errors: true
+   register: CHECK_NGINX_PKG_INSTALLED
+
+ - name: "increase_webserver_security: Check if package a2enmod is running"
+   shell:
+     which a2enmod | wc -l
+   ignore_errors: true
+   register: CHECK_A2ENMOD_PKG_RUN
+
+ - name: "increase_webserver_security: Check if package nginx is running"
+   shell:
+     which nginx | wc -l
+   ignore_errors: true
+   register: CHECK_NGINX_PKG_RUN
+
+ - name: "increase_webserver_security: Check if package apache2 is running"
+   shell:
+     ps aux | grep apache | wc -l
+   ignore_errors: true
+   register: CHECK_APACHE2_PKG_RUN
+
+ - name: "increase_webserver_security: Backup {{ETC_APACHE2_SECURITY_FILE}} file"
+   shell:
+     cp {{ETC_APACHE2_SECURITY_FILE}} {{ETC_APACHE2_SECURITY_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+   when: 'CHECK_APACHE2_SECURITY_FILE.stdout == "1"'
+ 
+ - name: "increase_webserver_security: Backup {{ETC_PHP5_FILE}} file"
+   shell:
+     cp {{ETC_PHP5_FILE}} {{ETC_PHP5_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+   when: 'CHECK_PHP5_FILE.stdout == "1"'
+
+ - name: "increase_webserver_security: Backup {{ETC_PHP7_FILE}} file"
+   shell:
+     cp {{ETC_PHP7_FILE}} {{ETC_PHP7_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+   when: 'CHECK_PHP7_FILE.stdout == "1"'
+
+ - name: "increase_webserver_security: Backup {{ETC_APACHE2_SSL_FILE}} file"
+   shell:
+     cp {{ETC_APACHE2_SSL_FILE}} {{ETC_APACHE2_SSL_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+   when: 'CHECK_APACHE2_SSL_FILE.stdout == "1"'
+
+ - name: "increase_webserver_security: Backup {{ETC_NGINX_FILE}} file"
+   shell:
+     cp {{ETC_NGINX_FILE}} {{ETC_NGINX_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+   when: 'CHECK_NGINX_FILE.stdout == "1"'
+
+ - name: "increase_webserver_security: Correcting security file 1/2"
+   replace: dest={{ETC_APACHE2_SECURITY_FILE}}
+            regexp="^ServerTokens.*"
+            replace="ServerTokens Prod"
+   when: 'CHECK_APACHE2_SECURITY_FILE.stdout == "1"'
+  
+ - name: "increase_webserver_security: Correcting security file 2/2"   
+   replace: dest={{ETC_APACHE2_SECURITY_FILE}}
+            regexp="^ServerSignature.*"
+            replace="ServerSignature Off"   
+   when: 'CHECK_APACHE2_SECURITY_FILE.stdout == "1"'
+
+ - name: "increase_webserver_security: Correcting php5.ini file"   
+   replace: dest={{ETC_PHP5_FILE}}
+            regexp="^expose_php.*"
+            replace="expose_php = Off"   
+   when: 'CHECK_PHP5_FILE.stdout == "1"'
+
+ - name: "increase_webserver_security: Correcting php7.ini file"   
+   replace: dest={{ETC_PHP7_FILE}}
+            regexp="^expose_php.*"
+            replace="expose_php = Off"   
+   when: 'CHECK_PHP7_FILE.stdout == "1"'
+
+ - name: "increase_webserver_security: Activate apache modules 1/2"
+   apache2_module: state=present name=headers
+   when: 'CHECK_A2ENMOD_PKG_RUN.stdout == "1"' 
+ 
+ - name: "increase_webserver_security: Activate apache modules 2/2"
+   command:
+     a2enconf security
+   when: 'CHECK_A2ENMOD_PKG_RUN.stdout == "1"' 
+
+ - name: "increase_webserver_security: Correcting ssl.conf file"   
+   replace: dest={{ETC_APACHE2_SSL_FILE}}
+            regexp="SSLProtocol.*"
+            replace="SSLProtocol all -SSLv2 -SSLv3"   
+   when: 'CHECK_APACHE2_SSL_FILE.stdout == "1"' 
+ 
+ - name: "increase_webserver_security: Restart apache service"
+   service:
+     name=apache2
+     state=restarted
+   when: 'CHECK_A2ENMOD_PKG_RUN.stdout == "1"' 
+
+ - name: "increase_webserver_security: Correcting nginx.conf file"
+   replace: dest={{ETC_NGINX_FILE}}
+            regexp="^#server_tokens.*"
+            replace="server_tokens off;"
+   when: 'CHECK_NGINX_PKG_RUN.stdout == "1"' 
+
+ - name: "increase_webserver_security: List security.conf old backups"
+   shell:
+     ls -la /etc/apache2/conf-available/ | grep -e "security.conf.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_APACHE2_SECURITY_OLD_BCK
+
+ - name: "increase_webserver_security: List php.ini old backups"
+   shell:
+     ls -la /etc/php5/apache2/ | grep -e "php.ini.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_PHP5_OLD_BCK
+
+ - name: "increase_webserver_security: List php7.ini old backups"
+   shell:
+     ls -la /etc/php/7.0/apache2/ | grep -e "php.ini.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_PHP7_OLD_BCK
+
+ - name: "increase_webserver_security: List ssl.conf old backups"
+   shell:
+     ls -la /etc/apache2/mods-available/ | grep -e "ssl.conf.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_SSL_OLD_BCK
+
+ - name: "increase_webserver_security: List nginx.conf old backups"
+   shell:
+     ls -la /etc/nginx/ | grep -e "nginx.conf.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_NGINX_OLD_BCK
+
+ - name: "increase_webserver_security: Remove {{ETC_APACHE2_SECURITY_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /etc/apache2/conf-available/security.conf.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_APACHE2_SECURITY_OLD_BCK.stdout > 2'
+
+ - name: "increase_webserver_security: Remove {{ETC_PHP5_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /etc/php5/apache2/php.ini.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_PHP5_OLD_BCK.stdout > 2'
+
+ - name: "increase_webserver_security: Remove {{ETC_PHP7_FILE}}  old backups keeping last two"
+   shell:
+     ls -1 /etc/php/7.0/apache2/php.ini.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_PHP7_OLD_BCK.stdout > 2'
+
+ - name: "increase_webserver_security: Remove {{ETC_APACHE2_SSL_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /etc/apache2/mods-available/ssl.conf.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_SSL_OLD_BCK.stdout > 2'
+
+ - name: "increase_webserver_security: Remove {{ETC_NGINX_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /etc/nginx/nginx.conf.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_NGINX_OLD_BCK.stdout > 2'

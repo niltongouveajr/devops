@@ -1,0 +1,52 @@
+---
+
+# Tasks file to "increase_network_security"
+
+ - name: "increase_network_security: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "increase_network_security: Backup {{ETC_SYSCTL_FILE}} file"
+   shell:
+     cp {{ETC_SYSCTL_FILE}} {{ETC_SYSCTL_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "increase_network_security: Backup {{ETC_HOST_FILE}} file"
+   shell:
+     cp {{ETC_HOST_FILE}} {{ETC_HOST_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "increase_network_security: Copy from template sysctl.j2 to {{ETC_SYSCTL_FILE}}"
+   template:
+     src=templates/sysctl.j2
+     dest={{ETC_SYSCTL_FILE}}
+     mode=0644
+
+ - name: "increase_network_security: Copy from template host.j2 to {{ETC_HOST_FILE}}"
+   template:
+     src=templates/host.j2
+     dest={{ETC_HOST_FILE}}
+     mode=0644
+
+ - name: "increase_network_security: List {{ETC_SYSCTL_FILE}} old backups"
+   shell:
+     ls -la /etc/ | grep -e "sysctl.conf.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_SYSCTL_OLD_BCK
+
+ - name: "increase_network_security: List {{ETC_HOST_FILE}} old backups"
+   shell:
+     ls -la /etc/ | grep -e "host.conf.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_HOST_OLD_BCK
+ 
+ - name: "increase_network_security: Remove {{ETC_SYSCTL_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /etc/sysctl.conf.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_SYSCTL_OLD_BCK.stdout > 2'
+
+ - name: "increase_network_security: Remove {{ETC_HOST_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /etc/host.conf.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_HOST_OLD_BCK.stdout > 2'

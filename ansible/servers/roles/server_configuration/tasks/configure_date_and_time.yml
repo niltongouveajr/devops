@@ -1,0 +1,46 @@
+---
+
+# Tasks file to "configure_date_and_time"
+
+ - name: "configure_date_and_time: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "configure_date_and_time: Backup of {{ETC_NTP_FILE}} file"
+   shell:
+     cp {{ETC_NTP_FILE}} {{ETC_NTP_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+ 
+ - name: "configure_date_and_time: Check if {{ETC_NTP_FILE}} is already configured"
+   shell: 
+     cat /etc/ntp.conf | grep unicamp | wc -l
+   register: CHECK_NTP_FILE
+
+ - name: "configure_date_and_time: Copy from ntp.conf.j2 to {{ETC_NTP_FILE}}"
+   template:
+     src=templates/ntp.conf.j2
+     dest={{ETC_NTP_FILE}}
+     mode=0644
+   when: 'CHECK_NTP_FILE.stdout == "0"'
+
+ - name: "configure_date_and_time: Ajust timezone to America/Sao_Paulo"
+   shell:
+     timedatectl set-timezone America/Sao_Paulo
+   register: ajust_timezone
+
+ - name: "configure_date_and_time: Ensures ntp service is restarted"
+   service:
+     name=ntp
+     state=started
+
+ - name: "configure_date_and_time: List old backups"
+   shell:
+     ls -la /etc/ | grep -e "ntp.conf.bck*" | wc -l
+   ignore_errors: true
+   register: LIST_OLD_BCK
+
+ - name: "configure_date_and_time: Remove old backups keeping last two"
+   shell:
+     ls -1 /etc/ntp.conf.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'LIST_OLD_BCK.stdout > 2'

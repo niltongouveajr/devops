@@ -1,0 +1,9 @@
+---
+
+# Handlers file for "server_monitoring" role
+
+- name: "Ensures SNMPD service is restarted"
+  service:
+    name=snmpd
+    state=restarted
+  tags: snmpd_restart

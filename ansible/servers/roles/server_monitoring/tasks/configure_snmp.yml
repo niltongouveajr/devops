@@ -1,0 +1,110 @@
+---
+
+# Tasks file for "configure_snmp"
+
+ - name: "configure_snmp: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "configure_snmp: Backup {{ETC_SNMP_FILE}} file"
+   shell:
+     cp {{ETC_SNMP_FILE}} {{ETC_SNMP_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "configure_snmp: Check if {{ETC_SNMP_FILE}} are configured"
+   shell:
+     cat /etc/snmp/snmpd.conf | head -1 | grep zabbix | wc -l 
+   register: CHECK_SNMP_FILE
+
+ - name: "configure_snmp: Check if snmp_nfs_config.sh alread exist on {{USR_LOCAL_BIN_PATH}}"
+   shell:
+     ls /usr/local/bin/ | grep "_nfs_config" | wc -l
+   register: CHECK_NFS_CONFIG_FILE
+
+ - name: "configure_snmp: Check if snmp}_uptime.sh alread exist on {{USR_LOCAL_BIN_PATH}}"
+   shell:
+     ls /usr/local/bin/ | grep "_uptime" | wc -l
+   register: CHECK_UPTIME_FILE
+
+ - name: "configure_snmp: Check if snmp_root_partition_percent_used.sh alread exist on {{USR_LOCAL_BIN_PATH}}"
+   shell:
+     ls /usr/local/bin/ | grep "_root_partition_percent_used" | wc -l
+   register: CHECK_DISK_PERCENT_FILE
+
+ - name: "configure_snmp: Copy from snmpd.conf to {{ETC_SNMP_PATH}}"
+   template:
+     src=templates/snmpd.conf
+     dest={{ETC_SNMP_PATH}}
+     mode=0644
+   when: 'CHECK_SNMP_FILE.stdout == "0"'
+
+ - name: "configure_snmp: Copy from snmp_nfs_config.j2 to {{USR_LOCAL_BIN_PATH}}"
+   template:
+     src=templates/snmp_nfs_config.j2
+     dest={{USR_LOCAL_BIN_PATH}}/{{ HOST_NAME }}_nfs_config.sh
+     mode=0755
+   when: 'CHECK_NFS_CONFIG_FILE.stdout == "0"'
+
+ - name: "configure_snmp: Copy from snmp_uptime.j2 to {{USR_LOCAL_BIN_PATH}}"
+   template:
+     src=templates/snmp_uptime.j2
+     dest={{USR_LOCAL_BIN_PATH}}/{{ HOST_NAME }}_uptime.sh
+     mode=0755
+   when: 'CHECK_UPTIME_FILE.stdout == "0"'
+
+ - name: "configure_snmp: Copy from snmp_root_partition_percent_used.j2 to {{USR_LOCAL_BIN_PATH}}"
+   template:
+     src=templates/snmp_root_partition_percent_used.j2
+     dest={{USR_LOCAL_BIN_PATH}}/{{ HOST_NAME }}_root_partition_percent_used.sh
+     mode=0755
+   when: 'CHECK_DISK_PERCENT_FILE.stdout == "0"'
+
+ - name: "configure_snmp: Check if uptime line exist in {{ETC_SNMP_FILE}}"
+   shell:
+     cat /etc/snmp/snmpd.conf | grep "_uptime" | wc -l
+   register: CHECK_SNMP_UPTIME_LINE
+
+ - name: "configure_snmp: Check if nfs_config line exist in {{ETC_SNMP_FILE}}"
+   shell:
+     cat /etc/snmp/snmpd.conf | grep "_nfs_config" | wc -l
+   register: CHECK_SNMP_NFS_CONFIG_LINE
+
+ - name: "configure_snmp: Check if root_percent_used line exist in {{ETC_SNMP_FILE}}"
+   shell:
+     cat /etc/snmp/snmpd.conf | grep "_root_partition_percent_used" | wc -l
+   register: CHECK_SNMP_ROOT_LINE
+
+ - name:  "configure_snmp: Include uptime line in {{ETC_SNMP_FILE}}"
+   lineinfile: dest={{ETC_SNMP_FILE}}
+               regexp='Endpoint'
+               line="(extend {{ HOST_NAME }}_uptime "/usr/local/bin/{{ HOST_NAME }}_uptime.sh")"
+   when: 'CHECK_SNMP_UPTIME_LINE.stdout == "0"'
+ 
+ - name:  "configure_snmp: Include nfs_confige line in {{ETC_SNMP_FILE}}"
+   lineinfile: dest={{ETC_SNMP_FILE}}
+               regexp='Endpoint'
+               line="(extend {{ HOST_NAME }}_nfs_config "/usr/local/bin/{{ HOST_NAME }}_nfs_config.sh")"
+   when: 'CHECK_SNMP_NFS_CONFIG_LINE.stdout == "0"'
+ 
+ - name:  "configure_snmp: Include root_percent_used line in {{ETC_SNMP_FILE}}"
+   lineinfile: dest={{ETC_SNMP_FILE}}
+               regexp='Endpoint'
+               line="extend {{ HOST_NAME }}_root_partition_percent_used \"/usr/local/bin/{{ HOST_NAME }}_root_partition_percent_used.sh\" "
+   when: 'CHECK_SNMP_ROOT_LINE.stdout == "0"'
+
+ - name: "configure_snmp: Restart snmpd service"
+   service:
+     name=snmpd
+     state=restarted
+
+ - name: "configures_snmp: List old backups"
+   shell:
+     ls -la /etc/rsyslog.d/ls -la /etc/snmp | grep "snmpd.conf.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_SNMP_OLD_BCK
+
+ - name: "Remove old backups keeping last two"
+   shell:
+     ls -1 /etc/snmp/snmpd.conf.bck-* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_SNMP_OLD_BCK.stdout > 2'

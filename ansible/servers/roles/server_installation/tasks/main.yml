@@ -1,0 +1,9 @@
+---
+
+# Main tasks file for "server_installation" role
+
+- import_tasks: "clean_packages.yml"
+  tags: ["clean_packages"]
+
+- import_tasks: "install_packages_ubuntu.yml"
+  tags: ["install_packages_ubuntu"]

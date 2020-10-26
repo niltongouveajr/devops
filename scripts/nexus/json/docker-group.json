@@ -1,0 +1,5 @@
+{
+"name": "docker-group",
+"type": "groovy",
+"content": "import groovy.json.JsonSlurper; parsed_args = new JsonSlurper().parseText(args); import org.sonatype.nexus.repository.Repository; import org.sonatype.nexus.repository.storage.WritePolicy; def groupMembers = ['docker-hub', parsed_args.repohosted]; repository.createDockerGroup(parsed_args.reponame, 0, parsed_args.repoport.toInteger(), groupMembers, true, parsed_args.repoblob, false)"
+}

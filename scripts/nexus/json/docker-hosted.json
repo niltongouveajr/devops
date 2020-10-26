@@ -1,0 +1,5 @@
+{
+"name": "docker-hosted",
+"type": "groovy",
+"content": "import groovy.json.JsonSlurper; parsed_args = new JsonSlurper().parseText(args); import org.sonatype.nexus.repository.Repository; import org.sonatype.nexus.repository.storage.WritePolicy; repository.createDockerHosted(parsed_args.reponame, 0, parsed_args.repoport.toInteger(), parsed_args.repoblob, true, true, WritePolicy.ALLOW)"
+}

@@ -1,0 +1,5 @@
+{
+  "name" : "blobstore",
+  "content" : "import groovy.json.JsonSlurper; parsed_args = new JsonSlurper().parseText(args); blobStore.createFileBlobStore(parsed_args.blobname, parsed_args.blobname)",
+  "type" : "groovy"
+}

@@ -1,0 +1,176 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Description of what the lane does"
+  lane :custom_lane do
+    # add actions here: https://docs.fastlane.tools/actions
+  end
+end
+
+lane :tests do |options|
+  workspace = (options[:workspace] ? options[:workspace] : "<Project>.xcworkspace")
+  scheme = (options[:scheme] ? options[:scheme] : "<Project>" )
+  config = (options[:configuration] ? options[:configuration] : "TestMock")
+  tests_to_skip = (options[:skip_test] ? options[:skip_test] : "<Project>UITests")
+  destination = (options[:destination])
+  code_coverage = (options[:code_coverage] ? options[:code_coverage] : "true")
+  output_dir = (options[:results_path])
+
+  sh("pod install")
+
+  run_tests(workspace: workspace,
+            destination: destination,
+            scheme: scheme,
+        configuration: config,
+        skip_testing: tests_to_skip,
+        code_coverage: code_coverage,
+        open_report: "false",
+        fail_build: "false")
+
+  slather(workspace: workspace,
+      scheme: scheme,
+          configuration: config,
+      proj: "<Project>.xcodeproj",
+      html: "true",
+      output_directory: output_dir,
+          ignore:["<Project>/View/*.*","<Project>/Model/*.*","<Project>/Res/*.*","<Project>/Mock/*.*","<Project>/Util/*.*","<Project>/AppDelegate.swift"])
+
+end
+
+lane :unit_tests do |options|
+  workspace = (options[:workspace] ? options[:workspace] : "<Project>.xcworkspace")
+  scheme = (options[:scheme] ? options[:scheme] : "<Project>" )
+  config = (options[:configuration] ? options[:configuration] : "TestMock")
+  clean = options[:clean]#default is false
+  test_without_building = options[:test_without_building]#default is false
+  devices = (options[:devices] ? options[:devices] : ["iPhone SE"])
+
+  sh("pod install")
+
+  scan(scheme: scheme,
+      configuration: config,
+      only_testing: "<Project>Tests",
+      devices: devices,
+      clean: clean,
+      test_without_building: test_without_building)
+
+end
+
+lane :build_ipa do |options|
+
+  version = get_version_number(xcodeproj: "<Project>.xcodeproj")
+  b_number = get_build_number(xcodeproj: "<Project>.xcodeproj", hide_error_when_versioning_disabled: true)
+
+  output_dir = (options[:output_dir] ? options[:output_dir] : "ipa")
+  scheme = (options[:scheme] ? options[:scheme] : "<Project>")
+  configuration = (options[:configuration] ? options[:configuration] : "Release")
+  output_name = "<Project>-" + configuration + "-v" + version + "-" + Time.new.strftime("%Y-%m-%dT%H-%M") + ".ipa"
+
+  sh("pod install")
+
+  build_app(scheme: scheme,
+  workspace: "<Project>.xcworkspace",
+  configuration: configuration,
+  silent: false,
+  clean: true,
+  output_directory: output_dir, # Destination directory. Defaults to current directory.
+  output_name: output_name,       # specify the name of the .ipa file to generate (including file extension)
+  export_options: {
+      method: "enterprise",
+      provisioningProfiles:{
+        "br.org.venturus.customer.project": "<Project>"
+      },
+      signingStyle: "manual"
+    }
+  )
+end
+
+# Fastfile actions accept additional configuration, but
+# don't worry, fastlane will prompt you for required
+# info which you can add here later
+lane :beta do |options|
+  configuration = options[:config]
+  # build your iOS app
+  # validation()
+
+  case configuration
+  when "release"
+    release()
+  when "validation"
+      validation()
+  when "mock"
+      mock()
+  when "dev"
+      dev()
+  else
+    UI.important "Not build"
+  end
+
+  file = options[:file]
+  group = (options[:group] ? options[:group] : "Venturus")
+  # upload to Beta by Crashlytics
+  crashlytics(
+    # keys for organization: Venturus
+    api_token: "af3f6bf797ac0bc1a8bccdfd999ef146153d71af",
+    build_secret: "50d739e212426aa91326c1b572a8621ca8c5a637c131c0d89774e1d5d0aa5da8",
+    groups: group,
+    ipa_path: file
+  )
+end
+
+## Install `npm install -g ios-deploy`
+lane :install do |options|
+  file = (options[:file] ? options[:file] : "ipa/file.ipa")
+
+  ## list all devices `instruments -s devices | grep -v "Simulator"`
+  ## if no device is specified the ipa will be installed in the first iOS device found
+  device = (options[:device])
+  install_on_device(
+  device_id: device,
+  ipa: file)
+end
+
+lane :validation do |options|
+  output_dir = (options[:output_dir] ? options[:output_dir] : "ipa")
+  build_ipa(configuration: "ReleaseValidation", output_dir: output_dir)
+end
+
+lane :mock do |options|
+  output_dir = (options[:output_dir] ? options[:output_dir] : "ipa")
+  build_ipa(configuration: "ReleaseMock", output_dir: output_dir)
+end
+
+lane :dev do |options|
+  output_dir = (options[:output_dir] ? options[:output_dir] : "ipa")
+  build_ipa(configuration: "ReleaseDev", output_dir: output_dir)
+end
+
+lane :release do |options|
+  output_dir = (options[:output_dir] ? options[:output_dir] : "ipa")
+  build_ipa(configuration: "Release", output_dir: output_dir)
+end
+
+lane :testMock do |options|
+  ### uncomment the code below to generate .ipa ###
+
+  # un_test = (options[:test] ? options[:test] : true)
+  # output_dir = (options[:output_dir] ? options[:output_dir] : "ipa")
+  # build_ipa(configuration: "TestMock", output_dir: output_dir)
+
+  # if un_test
+  #   unit_tests(test_without_building: true)
+  # end
+
+  unit_tests(test_without_building: false, clean: true)
+end

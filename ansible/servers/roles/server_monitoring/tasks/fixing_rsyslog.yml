@@ -1,0 +1,43 @@
+---
+
+# Tasks file for "fixing_rsyslog"
+
+ - name: "fixing_rsyslog: Get current date for backup rsyslog file"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: RSYSLOG_BACKUP_DATE
+
+ - name: "fixing_rsyslog: Check if 50-default.conf exist"
+   shell:
+     ls /etc/rsyslog.d/50-default.conf | wc -l
+   register: RSYSLOG_FILE
+
+ - name: "fixing_rsyslog: Backup rsyslog file"
+   shell:
+     cp {{RSYSLOG_DEST}} {{RSYSLOG_DEST}}.bck-{{RSYSLOG_BACKUP_DATE.stdout}}
+   when: 'RSYSLOG_FILE.stdout == "1"'
+
+ - name: "fixing_rsyslog: Copy from 50-default.j2 to {{RSYSLOG_DEST}}"
+   template:
+     src=templates/50-default.j2
+     dest={{RSYSLOG_DEST}}
+     mode=0644
+   when: 'RSYSLOG_FILE.stdout == "1"'
+
+ - name: "fixing_rsyslog: Ensures RSYSLOG service is restarted"
+   service:
+     name=rsyslog
+     state=restarted
+   when: 'RSYSLOG_FILE.stdout == "1"'
+
+ - name: "fixing_rsyslog: List old backups"
+   shell:
+     ls -la /etc/rsyslog.d/ | grep -e "50-default.conf*" | wc -l
+   ignore_errors: true
+   register: CHECK_OLD_BCK
+
+ - name: "fixing_rsyslog: Remove old backups keeping last two"
+   shell:
+     ls -1 /etc/rsyslog.d/50-default.conf.bck-* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_OLD_BCK.stdout > 2'

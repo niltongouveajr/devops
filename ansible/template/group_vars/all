@@ -1,0 +1,6 @@
+---
+
+# Global Variables for all roles
+
+HOST_NAME: "{{ ansible_hostname }}"
+

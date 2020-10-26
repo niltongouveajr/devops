@@ -1,0 +1,80 @@
+#!/bin/bash
+
+# Author: Nilton R Gouvea Junior
+
+# Variables
+
+read oldrev newrev refname
+
+repos=`pwd`
+rev=`echo $newrev | awk '{print substr ($0, 0, 8)}'`
+log=`git log --pretty=format:"%B" -n 1 $rev 2>/dev/null`
+author=`git log --oneline --pretty="%an" -n 1 $rev 2>/dev/null`
+date=`date +"%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)"`
+propfile="/srv/config/hooks/gitlab-hooks/conf/properties.cfg"
+jirahook=`dirname $0`/jira_hooks/git_post_receive.py
+
+if [ -f "${propfile}" ] ; then
+  source ${propfile}
+fi
+
+#######################################
+### IGNORE BRANCH CREATION/DELETION ###
+#######################################
+
+# Branch create
+if [[ "${oldrev}" == "0000000000000000000000000000000000000000" ]]; then
+  exit 0
+fi
+
+# Branch delete
+if [[ "${newrev}" == "0000000000000000000000000000000000000000" ]]; then
+  exit 0
+fi
+
+# Skip releases
+
+if [[ ! -z `echo ${log} | grep "Preparing for next release"` ]]; then
+  exit 0
+fi
+
+if [[ ! -z `echo ${log} | egrep "^?[R|r]elease"` ]]; then
+  exit 0
+fi
+
+if [[ ! -z `echo ${log} | egrep "maven-release-plugin"` ]]; then
+  exit 0
+fi
+
+##################
+### STATISTICS ###
+##################
+
+if [ "${gitstats_status}" -eq "1" ] ; then
+  lines_added=`git log -n 1 --shortstat --oneline -r ${rev} | tail -n 1 | grep "insertion" | sed "s|.*file.*changed, ||g" | sed "s|insertion.*.(+).*||g" | sed "s|(+).*||g" | sed "s| ||g" | sed "s|[a-z]||g"`
+  if [ "${lines_added}" == "" ] ; then 
+    lines_added=0
+  fi
+  # DB Select
+  gitstats_dbselect=`psql -U ${gitstats_dbuser} -h ${gitstats_dbhost} -d ${gitstats_dbname} -c "SELECT lines_accum FROM statistics order by id desc limit 1";`
+  gitstats_dbresult=`echo -e "${gitstats_dbselect}" | grep "[0-9]" | grep -v "^(" | sed "s| ||g"`
+  if [ "${gitstats_dbresult}" == "" ] ; then
+    gitstats_dbresult=0
+  fi
+  # DB Insert
+  psql -U ${gitstats_dbuser} -h ${gitstats_dbhost} -d ${gitstats_dbname} -c "INSERT INTO statistics (repos, rev, log, author, date, lines_added) VALUES ('$repos', '${rev}', '${log}', '${author}', '${date}', '${lines_added}');" > /dev/null 2> /dev/null
+  # DB Update
+  gitstats_idselect=`psql -U ${gitstats_dbuser} -h ${gitstats_dbhost} -d ${gitstats_dbname} -c "SELECT max(id) from statistics";`
+  gitstats_idresult=`echo -e "${gitstats_idselect}" | grep "[0-9]" | grep -v "^(" | sed "s| ||g"`
+  lines_accum=`echo "${lines_added}+${gitstats_dbresult}" | bc` 
+  if [ "${lines_added}" -ge "${gitstats_lineslimit}" ]; then
+    lines_accum="${gitstats_dbresult}"
+  fi
+  psql -U ${gitstats_dbuser} -h ${gitstats_dbhost} -d ${gitstats_dbname} -c "UPDATE statistics SET lines_accum='${lines_accum}' WHERE id = '${gitstats_idresult}'" > /dev/null 2> /dev/null
+fi
+
+################################
+### JIRA SCM ACTIVITY PLUGIN ###
+################################
+
+/usr/bin/python ${jirahook} --config "git_cfg.json" --oldrev ${oldrev} --newrev ${newrev} --refname ${refname} 2>/dev/null

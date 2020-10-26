@@ -1,0 +1,33 @@
+---
+
+# Tasks file to "install_packages"
+
+ - name: "install_packages: Run apt-get update"
+   apt: update_cache=yes
+
+ - name: "install_packages: Install list of packages"
+   apt:
+     pkg: 
+       - bc                       
+       - build-essential          
+       - curl                     
+       - elinks                   
+       - git-core                  
+       - jq                       
+       - ldap-utils                
+       - nfs-kernel-server        
+       - ntp                      
+       - ntpdate                  
+       - python                   
+       - python-minimal           
+       - python-passlib           
+       - resolvconf		  
+       - rcconf                    
+       - snmp                     
+       - snmpd                    
+       - snmp-mibs-downloader     
+       - subversion                
+       - tree                     
+       - vim                      
+       - zip                      
+     state: present

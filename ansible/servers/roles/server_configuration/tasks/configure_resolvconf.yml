@@ -1,0 +1,23 @@
+---
+
+# Tasks file to "configure_resolvconf"
+
+ - name: "configure_resolvconf: Copy from base.j2 to /etc/resolvconf.d"
+   copy:
+     src=files/base
+     dest=/etc/resolvconf/resolv.conf.d
+     owner=root
+     group=root
+     mode=0644
+
+ - name: "configure_resolvconf: Copy from head.j2 to /etc/resolvconf.d"
+   template:
+     src=files/head
+     dest=/etc/resolvconf/resolv.conf.d
+     owner=root
+     group=root
+     mode=0644
+
+ - name: "configure_resolvconf: Update resolv.conf"
+   shell:
+     resolvconf -u

@@ -1,0 +1,49 @@
+---
+
+# Tasks file to "update_hosts_file"
+
+# Backup Session
+
+ - name: "update_hosts_file: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "update_hosts_file: Backup hosts file"
+   shell:
+     cp {{ETC_HOSTS_FILE}} {{ETC_HOSTS_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+# Check Session
+
+# Run Session
+
+ - name: "update_hosts_file: Copy from hosts.j2 to {{ETC_HOSTS_FILE}}"
+   template:
+     src=templates/hosts.j2
+     dest={{ETC_HOSTS_FILE}}
+     mode=0644
+
+ - name: "update_hosts_file: Get network ip address"
+   shell:
+     ip addr | grep inet | grep brd | head -n 1 | awk '{print $2}' | sed "s|/.*||g"
+   register: GET_NETWORK_IP
+
+ - name: "update_hosts_file: Comment IP line in {{ETC_HOSTS_FILE}}"
+   replace:
+     dest={{ETC_HOSTS_FILE}}
+     regexp='(\s+){{GET_NETWORK_IP.stdout}}(\s+.*)?$'
+     replace='\1#{{GET_NETWORK_IP.stdout}}\2'
+
+# Delete Session
+
+ - name: "update_hosts_file: List old backups"
+   shell:
+     ls -la /etc/ | grep -e "hosts.bck*" | wc -l
+   ignore_errors: true
+   register: LIST_OLD_BCK
+
+ - name: "update_hosts_file: Remove old backups keeping last two"
+   shell:
+     ls -1 /etc/hosts.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'LIST_OLD_BCK.stdout > 2'

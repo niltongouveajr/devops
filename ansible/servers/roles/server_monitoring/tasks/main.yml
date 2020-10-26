@@ -1,0 +1,15 @@
+---
+
+# Main tasks file to "server_monitoring" role
+
+- import_tasks: "configure_snmp.yml"
+  tags: ["configure_snmp"]
+
+- import_tasks: "fixing_rsyslog.yml"
+  tags: ["fixing_rsyslog"]
+
+- import_tasks: "create_host_in_zabbix.yml"
+  tags: ["create_host_in_zabbix"]
+
+- import_tasks: "create_grafana_dashboard.yml"
+  tags: ["create_grafana_dashboard"]

@@ -1,0 +1,112 @@
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#ls
+
+#     https://docs.fastlane.tools/actions
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:android)
+
+platform :android do
+
+  desc "Runs unit tests for Mock"
+  lane :testMock do
+    gradle(task: "testMockDebugUnitTest")
+  end
+
+  desc "Runs instrumented tests for Mock"
+  lane :instrumentedTestMock do
+    list_devices
+    gradle(task: "connectedMockDebugAndroidTest")
+  end
+
+  desc "Runs instrumented tests for Validation Debug"
+  lane :instrumentedTestValidation do
+    list_devices
+    gradle(task: "connectedValidationDebugAndroidTest")
+  end
+
+  desc "Builds for Mock Debug"
+  lane :assembleMockDebug do
+    gradle(task: "assembleMockDebug")
+  end
+
+  desc "Builds for Prod Release"
+  lane :assembleProdRelease do
+    gradle(task: "assembleProdRelease")
+  end
+
+  desc "Builds for Validation Release"
+  lane :assembleValidationRelease do
+    gradle(task: "assembleValidationRelease")
+  end
+
+  desc "Lint for Validation Release"
+  lane :lintValidationRelease do
+    gradle(task: "lintValidationRelease")
+  end
+
+  desc "Unit Tests for Validation Release"
+  lane :testValidationReleaseUnitTest do
+    gradle(task: "testValidationReleaseUnitTest")
+  end
+
+  desc "Clean"
+  lane :clean do
+    gradle(task: "clean")
+  end
+
+  desc "Builds the project and run unit tests in Validation"
+  lane :buidProject do
+    clean
+    assembleValidationRelease
+    lintValidationRelease
+    testValidationReleaseUnitTest
+  end
+
+  desc "Submit a new Beta Build to Crashlytics Beta"
+  lane :beta do |options|
+
+    group = (options[:group] ? options[:group] : "Venturus")
+    file = options[:file]
+    
+    crashlytics(
+    # It is required to create a new organization on Fabric
+    # Use the keys api_token and build_secret related to the organization created on Fabric
+    # Group refers to the Organization created on Fabric (it will contain the users who will receive the notification
+    # about a new release)
+    # For the project changes required for having Crashlytics support, visit: https://fabric.io/kits/android/crashlytics/install
+    
+    api_token: "",
+    build_secret: "",
+    groups: group,
+    apk_path: file)
+
+    # sh "your_script.sh"
+    # You can also use other beta testing services here
+  end
+
+  desc "Deploy a new version to the Google Play"
+  lane :deploy do
+    gradle(task: "clean assembleRelease")
+    upload_to_play_store
+  end
+
+  #Instrumented tests will run in paralel in the multiple devices connected to the USB ports
+  desc "List all devices connected to the USB ports"
+  lane :list_devices do
+    adb_devices.each do |device|
+    model = adb(command: "shell getprop ro.product.model",
+      serial: device.serial).strip
+  
+    puts "Model #{model} is connected"
+  end
+end
+
+end
+

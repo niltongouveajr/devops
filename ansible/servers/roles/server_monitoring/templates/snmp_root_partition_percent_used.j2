@@ -1,0 +1,5 @@
+#!/bin/bash
+
+ROOT_PARTITION_PERCENT_USED=`df -h | grep '/$' | awk '{print $5}' | sed 's|,*%||g'`
+
+echo "${ROOT_PARTITION_PERCENT_USED}"

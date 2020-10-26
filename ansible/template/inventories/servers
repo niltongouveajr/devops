@@ -1,0 +1,13 @@
+; servers
+
+[development]
+server-dev01
+server-dev02
+
+[tests]
+server-test01
+server-test02
+
+[production]
+server-prod01
+server-prod02

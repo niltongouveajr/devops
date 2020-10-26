@@ -1,0 +1,32 @@
+; servers
+
+##############################################
+###              TOOLS SERVERS             ###
+##############################################
+
+[tools]
+server-tools01
+server-tools02
+server-tools03
+server-tools04
+server-tools05
+server-tools06
+server-tools07
+server-tools08
+server-tools09
+server-tools10
+
+##############################################
+###              TEST SERVERS              ###
+##############################################
+
+[test]
+server-test01
+
+##############################################
+###              ALL SERVERS               ###
+##############################################
+
+[all:children]
+tools
+test

@@ -1,0 +1,42 @@
+---
+
+# Tasks file to "configure_variables_and_path"
+
+ - name: "configure_variables_and_path: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "configure_variables_and_path: Backup of {{ETC_ENVIRONMENT_FILE}}"
+   shell:
+      cp {{ETC_ENVIRONMENT_FILE}} {{ETC_ENVIRONMENT_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "configure_variables_and_path: Check if JAVA_HOME already included in {{ETC_ENVIRONMENT_FILE}}"
+   shell:
+     cat /etc/environment | grep JAVA_HOME | wc -l
+   register: CHECK_JAVA_ALREAD_INCLUDE_IN_ETC_ENVIRONMENT
+ 
+ - name: "configure_variables_and_path: Check if JAVA already included in PATH"
+   shell:
+     cat /etc/environment | grep "/opt/tools/java/bin" | wc -l
+   register: CHECK_JAVA_ALREAD_INCLUD_IN_PATH
+ 
+ - name: "configure_variables_and_path: Setting default JAVA_HOME in {{ETC_ENVIRONMENT_FILE}}"
+   lineinfile: dest={{ETC_ENVIRONMENT_FILE}}
+               state=present
+               regexp='(\s+)PATH(\s+.*)?$'
+               insertbefore=BOF
+               line='JAVA_HOME=/opt/tools/java'
+   when: 'CHECK_JAVA_ALREAD_INCLUDE_IN_ETC_ENVIRONMENT.stdout == "0"'
+
+ - name: "configure_variables_and_path: List old backups"
+   shell:
+     ls -la /etc/ | grep -e "environment.bck*" | wc -l
+   ignore_errors: true
+   register: LIST_OLD_BCK
+
+ - name: "configure_variables_and_path: Remove old backups keeping last two"
+   shell:
+     ls -1 /etc/environment.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'LIST_OLD_BCK.stdout > 2'

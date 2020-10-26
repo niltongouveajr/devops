@@ -1,0 +1,57 @@
+---
+
+# Tasks file to "change_banner"
+
+ - name: "change_banner: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "change_banner: Get Backup issue file"
+   shell:
+     cp {{ETC_ISSUE_FILE}} {{ETC_ISSUE_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "change_banner: Get Backup issue.net file"
+   shell:
+     cp {{ETC_ISSUE_NET_FILE}} {{ETC_ISSUE_NET_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "change_banner: Get Copy from issue.j2 to {{ETC_ISSUE_FILE}}"
+   template:
+     src=templates/issue.j2
+     dest={{ETC_ISSUE_FILE}}
+     mode=0644
+
+ - name: "change_banner: Get Copy from issue.j2 to {{ETC_ISSUE_NET_FILE}}"
+   template:
+     src=templates/issue.j2
+     dest={{ETC_ISSUE_NET_FILE}}
+     mode=0644
+
+ - name: "change_banner: Set permition for correcting banner"
+   file:
+     path: /etc/update-motd.d
+     mode: "u=rwx,g=rx,o=rx"
+
+ - name: "change_banner: Get List issue old backups"
+   shell:
+     ls -la /etc/ | grep -e "issue.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_ISSUE_OLD_BCK
+
+ - name: "change_banner: Get List issue.net old backups"
+   shell:
+     ls -la /etc/ | grep -e "issue.net.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_ISSUE_NET_OLD_BCK
+
+ - name: "change_banner: Get Remove issue old backups keeping last two"
+   shell:
+     ls -1 /etc/issue.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_ISSUE_OLD_BCK.stdout > 2'
+
+ - name: "change_banner: Get Remove issue.net old backups keeping last two"
+   shell:
+     ls -1 /etc/issue.net.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_ISSUE_NET_OLD_BCK.stdout > 2'

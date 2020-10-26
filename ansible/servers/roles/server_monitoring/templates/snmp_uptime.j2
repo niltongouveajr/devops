@@ -1,0 +1,5 @@
+#!/bin/bash
+
+UPTIME=$(echo "`cat /proc/uptime | sed "s|\..*||g"`/60/60/24" | bc)
+
+echo "${UPTIME}"

@@ -1,0 +1,30 @@
+---
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: kubernetes 
+  region: us-east-1
+
+nodeGroups:
+  - name: ng-1
+    instanceType: t3.medium
+    desiredCapacity: 1
+
+fargateProfiles:
+  - name: fp-default
+    selectors:
+      # All workloads in the "default" Kubernetes namespace will be
+      # scheduled onto Fargate:
+      - namespace: default
+      # All workloads in the "kube-system" Kubernetes namespace will be
+      # scheduled onto Fargate:
+      - namespace: kube-system
+  - name: fp-homolog
+    selectors:
+      # All workloads in the "homolog" Kubernetes namespace matching the following
+      # label selectors will be scheduled onto Fargate:
+      - namespace: homolog
+        labels:
+          env: homolog
+          checks: passed

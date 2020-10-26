@@ -1,0 +1,33 @@
+---
+
+# Tasks file for "create_host_in_zabbix"
+
+- name: "Get network ip address"
+  shell:
+    ip addr | grep inet | grep brd | head -n 1 | awk '{print $2}' | sed "s|/.*||g"
+  register: HOSTS_IP_ADDRESS
+
+- name: "Create a new host on Zabbix if not exists"
+  ignore_errors: true
+  local_action:
+    module: zabbix_host
+    server_url: https://zabbix.local
+    login_user: "{{ ZABBIX_USER }}"
+    login_password: "{{ ZABBIX_PASSWORD }}"
+    host_name: "{{ HOST_NAME }}.local"
+    host_groups:
+      - 1. SERVERS
+    link_templates:
+      - 01. Template OS Linux - SERVERS
+    status: enabled
+    state: present
+    inventory_mode: disabled
+    force: no
+    timeout: 10
+    interfaces:
+      - type: 2
+        main: 1
+        useip: 1
+        ip: "{{ HOSTS_IP_ADDRESS.stdout }}"
+        dns: ""
+        port: 161

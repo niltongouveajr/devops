@@ -1,0 +1,18 @@
+---
+
+# Defaults file for "server_security" role
+
+ETC_APACHE2_SECURITY_FILE: "/etc/apache2/conf-available/security.conf"
+ETC_APACHE2_SSL_FILE: "/etc/apache2/mods-available/ssl.conf"
+ETC_HOST_FILE: "/etc/host.conf"
+ETC_ISSUE_FILE: "/etc/issue"
+ETC_ISSUE_NET_FILE: "/etc/issue.net"
+ETC_NGINX_FILE: "/etc/nginx/nginx.conf"
+ETC_PAMD_SSHD_FILE: "/etc/pam.d/sshd"
+ETC_PHP5_FILE: "/etc/php5/apache2/php.ini" 
+ETC_PHP7_FILE: "/etc/php/7.0/apache2/php.ini" 
+ETC_SSH_SSHD_CONFIG_FILE: "/etc/ssh/sshd_config"
+ETC_SYSCTL_FILE: "/etc/sysctl.conf"
+ROOT_SSH_AUTH_KEYS_FILE: "/root/.ssh/authorized_keys"
+DEVOPS_SSH_AUTH_KEYS_FILE: "/home/devops/.ssh/authorized_keys"
+DEVOPS_SSH_PATH: "/home/devops/.ssh"

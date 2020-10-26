@@ -1,0 +1,44 @@
+---
+
+# Tasks file to "configure_locale"
+
+ - name: "configure_locale: Get current date for backups"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "configure_locale: Backup of {{ETC_DEFAULT_LOCALE_FILE}} file"
+   shell:
+     cp {{ETC_DEFAULT_LOCALE_FILE}} {{ETC_DEFAULT_LOCALE_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "configure_locale: Correcting locale in OS"
+   shell:
+     locale-gen en_US en_US.UTF-8 pt_BR.UTF-8
+
+ - name: "configure_locale: Check if {{ETC_DEFAULT_LOCALE_FILE}} is already configured"
+   shell:
+     cat /etc/default/locale | grep LANG=en_US.UTF-8 | wc -l
+   register: CHECK_DEFAULT_LOCALE_FILE
+
+ - name: "configure_locale: Copy from locale.j2 to {{ETC_DEFAULT_LOCALE_FILE}}"
+   template:
+     src=templates/locale.j2
+     dest={{ETC_DEFAULT_LOCALE_FILE}}
+     mode=0644
+   when: 'CHECK_DEFAULT_LOCALE_FILE.stdout == "0"'
+
+ - name: "configure_locale: reading new locale"
+   shell:
+     . /etc/default/locale
+
+ - name: "configure_locale: List old backups"
+   shell:
+     ls -la /etc/default/ | grep -e "locale.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_LOCALE_OLD_BCK
+
+ - name: "configure_locale: Remove locale old backups keeping last two"
+   shell:
+     ls -1 /etc/default/locale.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_LOCALE_OLD_BCK.stdout > 2'

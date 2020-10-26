@@ -1,0 +1,21 @@
+---
+
+# Global Variables for all roles
+
+# group_vars/tools
+
+HOST_NAME: "{{ ansible_hostname }}"
+
+DATE: "{{lookup('pipe','date \"+%Y-%m-%d %H:%M\"')}}"
+
+USER: "<user>"
+PASSWORD: '<pass>'
+
+DEVOPS_USER: "<user>"
+DEVOPS_PASS: '<pass>'
+
+GRAFANA_USER: "<user>"
+GRAFANA_PASS: "<pass>"
+
+ZABBIX_USER: "<user>"
+ZABBIX_PASSWORD: '<pass>'

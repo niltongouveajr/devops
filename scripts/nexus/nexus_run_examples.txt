@@ -1,0 +1,12 @@
+
+
+#curl --silent --insecure --user admin:<pass> -X POST --header 'Content-Type: text/plain' https://nexus.local/service/rest/v1/script/echo/run -d "<message>"
+
+#curl --silent --insecure --user admin:<pass> -X POST --header 'Content-Type: text/plain' https://nexus.local/service/rest/v1/script/blobstore/run -d '{ "blobname": "<customer>" }'
+
+#curl --silent --insecure --user admin:<pass> -X POST --header 'Content-Type: text/plain' https://nexus.local/service/rest/v1/script/docker-hosted/run -d '{ "reponame":"docker-<customer>-hosted","repoport":"<port>","repoblob":"<blobstore>" }' 
+
+#curl --silent --insecure --user admin:<pass> -X POST --header 'Content-Type: text/plain' https://nexus.local/service/rest/v1/script/docker-group/run -d '{ "reponame":"docker-<customer>-group","repoport":"<port>","repoblob":"<blobstore>","repohosted":"docker-<customer>-hosted" }' 
+
+#curl --silent --insecure --user admin:<pass> -X POST --header 'Content-Type: text/plain' https://nexus.local/service/rest/v1/script/role/run -d '{ "roleadgroup":"Acesso_<customer>","rolecustomer":"<customer>" }' 
+

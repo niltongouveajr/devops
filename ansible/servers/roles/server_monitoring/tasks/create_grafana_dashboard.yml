@@ -1,0 +1,15 @@
+---
+
+# Tasks file for "create_host_in_zabbix"
+
+- name: "Create a new Grafana dashboard if not exists"
+  uri:
+    url: https://grafana.local:3000/api/dashboards/db
+    method: POST
+    body: "{{ lookup('template', 'grafana_template.json.j2') }}" 
+    body_format: json
+    headers:
+      Authorization: "Bearer abcdefghijklmnopqrstuvwxyz=="
+      Content-Type: "application/json"
+      Accept: "application/json"
+  ignore_errors: true

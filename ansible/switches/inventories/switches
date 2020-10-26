@@ -1,0 +1,15 @@
+; IT Environment
+
+######################
+###    SWITCHES    ###
+######################
+
+[switches]
+192.168.0.1			ansible_connection=local
+
+#####################
+### SWITCHES: ALL ###
+#####################
+
+[switches_all:children]
+switches

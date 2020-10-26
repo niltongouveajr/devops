@@ -1,0 +1,9 @@
+---
+
+# Main tasks file for "switches_vlan" role
+
+- import_tasks: "switches_show_version.yml"
+  tags: ["switches_show_version"]
+
+- import_tasks: "switches_create_vlan.yml"
+  tags: ["switches_create_vlan"]

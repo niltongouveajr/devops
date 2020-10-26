@@ -1,0 +1,77 @@
+---
+
+# Tasks file to "update_sshd_config_file"
+
+ - name: "update_sshd_config_file: Get current date"
+   shell:
+     date '+%Y%m%d%H%M%S'
+   register: GET_CURRENT_DATE
+
+ - name: "update_sshd_config_file: Backup {{ETC_SSH_SSHD_CONFIG_FILE}} file"
+   shell:
+     cp {{ETC_SSH_SSHD_CONFIG_FILE}} {{ETC_SSH_SSHD_CONFIG_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "update_sshd_config_file: Backup {{ETC_PAMD_SSHD_FILE}} file"
+   shell:
+     cp {{ETC_PAMD_SSHD_FILE}} {{ETC_PAMD_SSHD_FILE}}.bck-{{GET_CURRENT_DATE.stdout}}
+
+ - name: "update_sshd_config_file: Copy from sshd_config.j2 to {{ETC_SSH_SSHD_CONFIG_FILE}}"
+   template:
+     src=templates/sshd_config.j2
+     dest={{ETC_SSH_SSHD_CONFIG_FILE}}
+     mode=0644
+
+ - name: "update_sshd_config_file: Check if service sshd exist on server"
+   shell:
+     service sshd status | wc -l
+   args:
+     warn: false
+   register: SERVICE_SSHD
+
+ - name: "update_sshd_config_file: Check if service ssh exist on server"
+   shell:
+     service ssh status | wc -l
+   args:
+     warn: false
+   register: SERVICE_SSH
+
+ - name: "update_sshd_config_file: Restart sshd service"
+   service:
+     name=sshd
+     state=restarted
+   when: 'SERVICE_SSHD.stdout > "0"'
+
+ - name: "update_sshd_config_file: Restart ssh service"
+   service:
+     name=ssh
+     state=restarted
+   when: 'SERVICE_SSH.stdout > "0"'
+
+ - name: "update_sshd_config_file: Correcting {{ETC_PAMD_SSHD_FILE}}"
+   replace: dest={{ETC_PAMD_SSHD_FILE}}
+            regexp="session.*.pam_motd.so*"
+            replace="#session.*.pam_motd.so*"
+
+ - name: "update_sshd_config_file: List {{ETC_SSH_SSHD_CONFIG_FILE}} old backups"
+   shell:
+     ls -la /etc/ssh/ | grep -e "sshd_config.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_SSHD_CONFIG_OLD_BACKUPS
+
+ - name: "update_sshd_config_file: List {{ETC_PAMD_SSHD_FILE}} old backups"
+   shell:
+     ls -la /etc/pam.d/ | grep -e "sshd.bck*" | wc -l
+   ignore_errors: true
+   register: CHECK_PAMD_SSHD_OLD_BACKUPS
+
+ - name: "update_sshd_config_file: Remove {{ETC_SSH_SSHD_CONFIG_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /etc/ssh/sshd_config.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_SSHD_CONFIG_OLD_BACKUPS.stdout > 2'
+
+ - name: "update_sshd_config_file: Remove {{ETC_PAMD_SSHD_FILE}} old backups keeping last two"
+   shell:
+     ls -1 /etc/pam.d/sshd.bck* | head -n -2 | xargs rm 2>/dev/null
+   ignore_errors: true
+   when: 'CHECK_PAMD_SSHD_OLD_BACKUPS.stdout > 2'
