@@ -1,0 +1,5 @@
+.aws
+.terraform
+*.tfstate
+*.tfstate.backup
+key*
