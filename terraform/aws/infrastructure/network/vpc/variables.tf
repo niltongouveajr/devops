@@ -17,3 +17,7 @@ variable "vpc_instance_tenancy" {
 variable "vpc_tag_name" {
   default = "test-vpc"
 }
+
+variable "vpc_tag_environment" {
+  default = "Test"
+}

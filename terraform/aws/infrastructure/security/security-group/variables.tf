@@ -5,3 +5,7 @@ variable "sg_name" {
 variable "sg_tag_name" {
   default = "test-sg"
 }
+
+variable "sg_tag_environment" {
+  default = "Test"
+}

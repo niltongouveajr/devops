@@ -6,7 +6,8 @@ resource "aws_subnet" "subnet1-public" {
   availability_zone       = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = var.subnet1_map_public_ip
   tags = {
-    Name = var.subnet1_public_tag_name
+    Name                  = var.subnet1_public_tag_name
+    Environment           = var.subnet1_public_tag_environment
   }
 }
 
@@ -16,7 +17,8 @@ resource "aws_subnet" "subnet2-public" {
   availability_zone       = data.aws_availability_zones.available.names[1]
   map_public_ip_on_launch = var.subnet2_map_public_ip
   tags = {
-    Name = var.subnet2_public_tag_name
+    Name                  = var.subnet2_public_tag_name
+    Environment           = var.subnet2_public_tag_environment
   }
 }
 
@@ -26,7 +28,8 @@ resource "aws_subnet" "subnet3-private" {
   availability_zone       = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = var.subnet3_map_public_ip
   tags = {
-    Name = var.subnet3_private_tag_name
+    Name                  = var.subnet3_private_tag_name
+    Environment           = var.subnet3_private_tag_environment
   }
 }
 
@@ -36,6 +39,7 @@ resource "aws_subnet" "subnet4-private" {
   availability_zone       = data.aws_availability_zones.available.names[1]
   map_public_ip_on_launch = var.subnet4_map_public_ip
   tags = {
-    Name = var.subnet4_private_tag_name
+    Name                  = var.subnet4_private_tag_name
+    Environment           = var.subnet4_private_tag_environment
   }
 }

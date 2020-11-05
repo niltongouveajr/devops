@@ -1,5 +1,5 @@
 .aws
 .terraform
+*.backup
 *.tfstate
-*.tfstate.backup
 key*

@@ -1,11 +1,12 @@
 resource "aws_route_table" "module-infrastructure-network-rt" {
-  vpc_id = var.vpc_id
+  vpc_id         = var.vpc_id
   route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = var.igw_id
+    cidr_block   = "0.0.0.0/0"
+    gateway_id   = var.igw_id
   }
   tags = {
-    Name = var.rt_tag_name
+    Name         = var.rt_tag_name
+    Environment  = var.rt_tag_environment
   }
 }
 

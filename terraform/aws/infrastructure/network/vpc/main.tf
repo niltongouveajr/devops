@@ -4,6 +4,7 @@ resource "aws_vpc" "module-infrastructure-network-vpc" {
   enable_dns_support   = var.vpc_dns_support
   instance_tenancy     = var.vpc_instance_tenancy
   tags = {
-    Name = var.vpc_tag_name
+    Name               = var.vpc_tag_name
+    Environment        = var.vpc_tag_environment
   }
 }

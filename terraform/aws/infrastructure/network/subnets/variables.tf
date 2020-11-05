@@ -45,3 +45,19 @@ variable "subnet3_private_tag_name" {
 variable "subnet4_private_tag_name" {
   default = "test-subnet4-private"
 }
+
+variable "subnet1_public_tag_environment" {
+  default = "Test"
+}
+
+variable "subnet2_public_tag_environment" {
+  default = "Test"
+}
+
+variable "subnet3_private_tag_environment" {
+  default = "Test"
+}
+
+variable "subnet4_private_tag_environment" {
+  default = "Test"
+}

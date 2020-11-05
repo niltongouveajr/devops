@@ -30,6 +30,7 @@ resource "aws_security_group" "module-infrastructure-security-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   tags = {
-    Name = var.sg_tag_name
+    Name        = var.sg_tag_name
+    Environment = var.sg_tag_environment
   }
 }
