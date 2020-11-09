@@ -1,7 +1,11 @@
 variable "rt_tag_name" {
-  default = "test-rt"
+  description = "" 
+  default     = "test-rt"
+  type        = string
 }
 
 variable "rt_tag_environment" {
-  default = "Test"
+  description = "" 
+  default     = "Test"
+  type        = string
 }

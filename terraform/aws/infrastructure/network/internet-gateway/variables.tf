@@ -1,7 +1,11 @@
 variable "internet_gateway_tag_name" {
-  default = "test-igw"
+  description = "" 
+  default     = "test-igw"
+  type        = string
 }
 
 variable "internet_gateway_tag_environment" {
-  default = "Test"
+  description = "" 
+  default     = "Test"
+  type        = string
 }

@@ -1,23 +1,35 @@
 variable "s3_bucket_name" {
-  default = "test-s3-bucket-niltongouveajr"
+  description = "" 
+  default     = "test-s3-bucket-niltongouveajr"
+  type        = string
 }
 
 variable "s3_bucket_acl" {
-  default = "private"
+  description = "" 
+  default     = "private"
+  type        = string
 }
 
 variable "s3_bucket_versioning" {
-  default = "true"
+  description = "" 
+  default     = true
+  type        = bool
 }
 
 variable "s3_bucket_lifecycle" {
-  default = "true"
+  description = "" 
+  default     = true
+  type        = bool
 }
 
 variable "s3_bucket_tag_name" {
-  default = "test-s3-bucket"
+  description = "" 
+  default     = "test-s3-bucket"
+  type        = string
 }
 
 variable "s3_bucket_tag_environment" {
-  default = "Test"
+  description = "" 
+  default     = "Test"
+  type        = string
 }

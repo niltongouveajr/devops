@@ -39,3 +39,11 @@ module "module-services-ec2" {
 module "module-services-s3" {
   source = "./services/s3"
 }
+
+module "module-infrastructure-security-kms" {
+  source = "./infrastructure/security/kms-encrypt"
+}
+
+#module "module-services-rds" {
+#  source = "./services/rds"
+#}

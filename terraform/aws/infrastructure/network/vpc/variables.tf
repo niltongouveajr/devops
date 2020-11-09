@@ -1,23 +1,35 @@
 variable "vpc_cidr_block" {
-  default = "10.0.0.0/16"
+  description = "" 
+  default     = "10.0.0.0/16"
+  type        = string
 }
 
 variable "vpc_dns_hostnames" {
-  default = "false"
+  description = "" 
+  default     = false
+  type        = bool
 }
 
 variable "vpc_dns_support" {
-  default = "true"
+  description = "" 
+  default     = true
+  type        = bool
 }
 
 variable "vpc_instance_tenancy" {
-  default = "default"
+  description = "" 
+  default     = "default"
+  type        = string
 }
 
 variable "vpc_tag_name" {
-  default = "test-vpc"
+  description = "" 
+  default     = "test-vpc"
+  type        = string
 }
 
 variable "vpc_tag_environment" {
-  default = "Test"
+  description = "" 
+  default     = "Test"
+  type        = string
 }

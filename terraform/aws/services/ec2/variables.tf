@@ -1,15 +1,23 @@
 variable "ec2_ami" {
-  default = "ami-02dc8ad50da58fffd"
+  description = "" 
+  default     = "ami-02dc8ad50da58fffd"
+  type        = string
 }
 
 variable "ec2_type" {
-  default = "t2.micro"
+  description = "" 
+  default     = "t2.micro"
+  type        = string
 }
 
 variable "ec2_tag_name" {
-  default = "test-ec2"
+  description = "" 
+  default     = "test-ec2"
+  type        = string
 }
 
 variable "ec2_tag_environment" {
-  default = "Test"
+  description = "" 
+  default     = "Test"
+  type        = string
 }
