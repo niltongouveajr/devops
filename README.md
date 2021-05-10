@@ -1,5 +1,5 @@
 <h2>Nilton R Gouvea Junior</h2>
-<h4>Analista DevOps SR / Site Reliability Engineer</h4>
+<h4>Analista DevOps SR / Site Reliability Engineer (entusiasta)</h4>
 
 :house:    Campinas-SP<br>
 :envelope: niltongouveajr@gmail.com<br>
