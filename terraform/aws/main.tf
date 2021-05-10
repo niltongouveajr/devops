@@ -46,4 +46,9 @@ module "module-infrastructure-security-kms" {
 
 #module "module-services-rds" {
 #  source = "./services/rds"
+#  kms_id  = module.module-infrastructure-security-kms.kms_id
 #}
+
+module "module-pipeline-codecommit" {
+  source = "./pipeline/codecommit"
+}
