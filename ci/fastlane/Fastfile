@@ -1,0 +1,134 @@
+opt_out_usage
+default_platform(:ios)
+
+identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
+
+desc "Install dependencies"
+lane :deps_install do
+  ensure_xcode_version(version: ENV["XCODE_VERSION"])
+  cocoapods(
+    repo_update: true,
+    clean_install: true,
+    podfile: "./Podfile"
+  )
+end
+
+desc "Delete temporary keychain"
+lane :keychain_delete do
+  delete_keychain(name: ENV["MATCH_KEYCHAIN_NAME"]) if File.exists? File.expand_path("~/Library/Keychains/" + ENV["MATCH_KEYCHAIN_NAME"])
+end
+
+desc "Create temporary keychain"
+lane :keychain_create do
+  keychain_delete
+  create_keychain(
+    name: ENV["MATCH_KEYCHAIN_NAME"],
+    password: ENV["MATCH_KEYCHAIN_PASS"],
+    unlock: true,
+    timeout: 0,
+    lock_when_sleeps: false,
+    add_to_search_list: true
+  )
+  match()
+#  import_certificate(
+#    certificate_path: "certificates.p12",
+#    certificate_password: ENV["MATCH_PASSWORD"],
+#    keychain_name: ENV["MATCH_KEYCHAIN_NAME"],
+#    keychain_password: ENV["MATCH_KEYCHAIN_PASS"]
+#  )
+end
+
+desc "Unlock temporary keychain"
+lane :keychain_unlock do
+  unlock_keychain(
+    path: ENV["MATCH_KEYCHAIN_NAME"],
+    password: ENV["MATCH_KEYCHAIN_PASS"],
+    add_to_search_list: :replace
+  )
+end
+
+desc "Build only"
+lane :build do
+  deps_install
+  workspace = ENV["XCODE_WORKSPACE"]
+  scheme = ENV["XCODE_SCHEME"]
+  configuration = ENV["XCODE_CONFIGURATION"]
+  build_app(
+    clean: true,
+    silent: false,
+    workspace: workspace,
+    scheme: scheme,
+    configuration: configuration,
+    skip_package_ipa: true,
+    skip_archive: true,
+    skip_codesigning: true
+  )
+end
+
+desc "Build and generate ipa"
+lane :build_ipa do
+  deps_install
+  keychain_create
+  workspace = ENV["XCODE_WORKSPACE"]
+  scheme = ENV["XCODE_SCHEME"]
+  configuration = ENV["XCODE_CONFIGURATION"]
+  version = get_version_number(xcodeproj: ENV["XCODE_PROJ"])
+  output_dir = ENV["XCODE_OUTPUT_DIR"]
+  output_name = ENV["XCODE_OUTPUT_NAME"] + configuration + "-v" + version + "-" + Time.new.strftime("%Y-%m-%dT%H-%M") + ".ipa"
+  increment_build_number({
+    build_number: latest_testflight_build_number + 1
+  })
+  keychain_unlock
+  build_app(
+    clean: true,
+    silent: false,
+    workspace: workspace,
+    scheme: scheme,
+    configuration: configuration,
+    output_directory: output_dir,
+    output_name: output_name,
+    skip_package_ipa: false,
+    skip_archive: false,
+    skip_codesigning: false,
+    export_options: {
+      provisioningProfiles:{
+        "PRODUCT_BUNDLE_IDENTIFIER": "{PROVISIONING_PROFILE_SPECIFIER}"
+      },
+      method: ENV["XCODE_SIGN_METHOD"],
+      signingStyle: "manual"
+    }
+  )
+  keychain_delete
+end
+
+desc "Generate App Store Connect token"
+lane :app_store_token do
+  sh "export FASTLANE_SESSION=$(fastlane spaceauth | grep \"export\" | awk -F \"export FASTLANE_SESSION=\" '{print $2}' | sed \"s|'||g\")"
+end
+
+desc "Upload to TestFlight"
+lane :testflight_upload do
+  build_ipa
+  app_store_token
+  pilot(
+    ipa: ENV["IPA_OUTPUT_PATH"],
+    changelog: "Bug fixes",
+    skip_submission: true,
+    distribute_only: false,
+    distribute_external: false,
+    wait_processing_interval: 30
+  )
+end
+
+desc "Release to App Store"
+lane :app_store_release do
+  build_ipa
+  app_store_token
+  deliver(
+    ipa: ENV["IPA_OUTPUT_PATH"],
+    skip_screenshots: true,
+    skip_metadata: true,
+    submit_for_review: true
+  )
+end

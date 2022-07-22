@@ -1,0 +1,11 @@
+; servers
+
+[development]
+host1.domain.local
+
+[test]
+host2.domain.local
+
+[all:children]
+development
+test

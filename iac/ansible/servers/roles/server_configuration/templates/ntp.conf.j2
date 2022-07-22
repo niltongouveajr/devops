@@ -1,0 +1,17 @@
+restrict 127.0.0.1
+restrict source notrap nomodify noquery
+
+driftfile /var/lib/ntp/ntp.drift
+
+statistics loopstats peerstats clockstats
+filegen loopstats file loopstats type day enable
+filegen peerstats file peerstats type day enable
+filegen clockstats file clockstats type day enable
+
+server ntp.unicamp.br iburst
+server ntp.hiway.com.br iburst
+server ntp.cais.rnp.br iburst
+server 0.br.pool.ntp.org iburst
+server 1.br.pool.ntp.org iburst
+server 2.br.pool.ntp.org iburst
+server 3.br.pool.ntp.org iburst

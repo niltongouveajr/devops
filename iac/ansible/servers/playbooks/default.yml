@@ -1,0 +1,30 @@
+---
+
+# Ansible Playbook for "all"
+
+- hosts: all
+  remote_user: root
+  gather_facts: yes
+
+  pre_tasks:
+    - name: "Install Python"
+      raw: test -e /usr/bin/python || (apt-get -y update && apt-get install -y python python-minimal python-passlib python-simplejson)
+      register: output
+      changed_when:
+      - output.stdout != ""
+      - output.stdout != "\r\n"
+      become: true
+    - name: "Gathering facts"
+      setup:
+
+  roles:
+    - { role: ../roles/server_installation, tags: ["server_installation"] }
+    - { role: ../roles/server_configuration, tags: ["server_configuration"] }
+    - { role: ../roles/server_monitoring, tags: ["server_monitoring"] }
+    - { role: ../roles/server_security, tags: ["server_security"] }
+
+  tasks:
+#    - shell: echo 'tasks'
+
+  post_tasks:
+#    - shell: echo 'post-tasks'

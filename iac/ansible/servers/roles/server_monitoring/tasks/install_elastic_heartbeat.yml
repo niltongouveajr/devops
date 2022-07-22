@@ -1,0 +1,29 @@
+---
+
+# Tasks file to "install_elastic_heartbeat"
+
+ - name: "install_elastic_heartbeat: Install heartbeat package"
+   apt:
+     deb=https://artifacts.elastic.co/downloads/beats/heartbeat/heartbeat-7.13.4-amd64.deb
+
+ - name: "install_elastic_heartbeat: Copy from heartbeat.yml.j2 to {{ETC_HEARTBEAT_FILE}}"
+   template:
+     src=templates/heartbeat.yml.j2
+     dest={{ETC_HEARTBEAT_FILE}}
+     owner=root
+     group=root
+     mode=0600
+     backup=yes
+
+ - name: "install_elastic_heartbeat: Remove old backups"
+   shell: |
+     find /etc/heartbeat -maxdepth 1 -name "heartbeat.yml.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc/heartbeat -maxdepth 1 -name "heartbeat.yml.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "install_elastic_heartbeat: Enable heartbeat service"
+   systemd:
+     name=heartbeat-elastic
+     daemon_reload=yes
+     enabled=yes
+     state=restarted

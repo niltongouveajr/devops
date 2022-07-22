@@ -1,0 +1,10 @@
+---
+
+# Defaults file for "server_security" role
+
+ETC_HOST_FILE: "/etc/host.conf"
+ETC_ISSUE_FILE: "/etc/issue"
+ETC_ISSUE_NET_FILE: "/etc/issue.net"
+ETC_PAMD_SSHD_FILE: "/etc/pam.d/sshd"
+ETC_SSH_SSHD_CONFIG_FILE: "/etc/ssh/sshd_config"
+ETC_SYSCTL_FILE: "/etc/sysctl.conf"

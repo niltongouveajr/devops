@@ -1,0 +1,10 @@
+---
+
+# Defaults file for "server_configuration" role
+
+ETC_DEFAULT_LOCALE_FILE: "/etc/default/locale"
+ETC_ENVIRONMENT_FILE: "/etc/environment"
+ETC_HOSTS_FILE: "/etc/hosts"
+ETC_MULTIPATH_FILE: "/etc/multipath.conf"
+ETC_NTP_FILE: "/etc/ntp.conf"
+ETC_RESOLVCONFD_DIR: "/etc/resolvconf.d"

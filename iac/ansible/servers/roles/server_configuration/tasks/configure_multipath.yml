@@ -1,0 +1,31 @@
+---
+
+# Tasks file to "configure_multipath"
+
+ - name: "configure_multipath: Check if {{ETC_MULTIPATH_FILE}} exists"
+   stat:
+     path={{ETC_MULTIPATH_FILE}}
+   register: check
+
+ - name: "configure_multipath: Copy from multipath.conf.j2 to {{ETC_MULTIPATH_FILE}}"
+   template:
+     src=templates/multipath.conf.j2
+     dest={{ETC_MULTIPATH_FILE}}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+   when: check.stat.exists and check.stat.isreg
+
+ - name: "configure_multipath: Remove old backups"
+   shell: |
+     find /etc -maxdepth 1 -name "multipath.conf.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc -maxdepth 1 -name "multipath.conf.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+   when: check.stat.exists and check.stat.isreg
+
+ - name: "configure_multipath: Ensures multipath-tools service is restarted"
+   service:
+     name=multipath-tools
+     state=restarted
+   when: check.stat.exists and check.stat.isreg

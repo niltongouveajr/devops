@@ -1,0 +1,10 @@
+---
+
+# Defaults file for "server_monitoring" role
+
+ETC_SNMP_FILE: "/etc/snmp/snmpd.conf"
+ETC_SNMP_PATH: "/etc/snmp"
+ETC_FILEBEAT_FILE: "/etc/filebeat/filebeat.yml"
+ETC_HEARTBEAT_FILE: "/etc/heartbeat/heartbeat.yml"
+ETC_METRICBEAT_FILE: "/etc/metricbeat/metricbeat.yml"
+ETC_METRICBEAT_KIBANAXPACK_FILE: "/etc/metricbeat/modules.d/kibana-xpack.yml"

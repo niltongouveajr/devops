@@ -1,0 +1,202 @@
+trigger:
+  branches:
+    include:
+      - '*'
+  tags:
+    include:
+      - '*'
+  paths:
+    exclude:
+      - 'README.md'
+
+variables:
+  - group: 'Ephemeral Docker Agent'
+  - template: templates/variables.yml
+
+jobs:
+
+- template: templates/provisioning.yml
+
+###################################
+### CI (CONTINUOUS INTEGRATION) ###
+###################################
+
+- job: ci
+  displayName: 'CI (CONTINUOUS INTEGRATION)'
+  dependsOn: provisioning
+  condition: succeeded()
+  pool: $(AZ_EDA_AGENT_POOL)
+  variables:
+    DotNETCoreVersion: '6.0.101'
+    NodeVersion: '14.x'
+    npm_config_cache: '$(Pipeline.Workspace)/.npm'
+  steps:
+    ####################
+    ### Checkout SCM ###
+    ####################
+    - checkout: self
+      displayName: 'Checkout SCM'
+      clean: true
+      fetchDepth: 1
+    ######################
+    ### Install NodeJS ###
+    ######################
+    - task: NodeTool@0
+      displayName: 'Install NodeJS'
+      inputs:
+        versionSpec: '$(NodeVersion)'
+    #############
+    ### Build ###
+    #############
+    - script: |
+        npm ci
+        npm install -g @angular/cli
+        $(BUILD_COMMAND)
+      displayName: 'Build $(ENVIRONMENT)'
+    ###############################
+    ### Archive Build Artifacts ###
+    ###############################
+    - ${{ if ne(variables['SKIP_ARCHIVE'], 'true') }}:
+        - task: ArchiveFiles@2
+          displayName: 'Archive Build Artifacts'
+          inputs:
+            rootFolderOrFile: '$(System.DefaultWorkingDirectory)/dist/devops-demo'
+            includeRootFolder: true
+            archiveType: 'zip'
+            archiveFile: '$(Build.ArtifactStagingDirectory)/devops-demo.zip'
+            replaceExistingArchive: true
+    ###############################
+    ### Publish Build Artifacts ###
+    ###############################
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Build Artifacts'
+      inputs:
+        pathtoPublish: '$(System.DefaultWorkingDirectory)/dist/devops-demo'
+        artifactName: 'devops-demo'
+    #################
+    ### Unit Test ###
+    #################
+    - ${{ if ne(variables['SKIP_UNIT_TESTS'], 'true') }}:
+        - script: |
+            npm run test
+          displayName: 'Run Unit Tests'
+        #################################
+        ### Publish Unit Test Results ###
+        #################################
+        - task: PublishTestResults@2
+          displayName: 'Publish Unit Tests Results'
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: 'coverage/junit-report-xml'
+            failTaskOnFailedTests: true
+            testRunTitle: 'Unit Tests Results'
+        #############################
+        ### Prepare Code Coverage ###
+        #############################
+        - task: UseDotNet@2
+          displayName: 'Prepare Code Coverage'
+          inputs:
+            packageType: sdk
+            version: '$(DotNETCoreVersion)'
+            installationPath: '$(Agent.ToolsDirectory)/dotnet'
+        ####################################
+        ### Publish Code Coverage Result ###
+        ####################################
+        - task: PublishCodeCoverageResults@1
+          displayName: 'Publish Code Coverage Result'
+          inputs:
+            codeCoverageTool: 'cobertura'
+            summaryFileLocation: 'coverage/cobertura-coverage.xml'
+            failIfCoverageEmpty: false
+   ############################
+   ### Static Code Analisys ###
+   ############################
+   - ${{ if ne(variables['SKIP_STATIC_CODE_ANALISYS'], 'true') }}:
+       - task: SonarCloudPrepare@1
+         displayName: 'Prepare Static Code Analisys'
+         inputs:
+           SonarCloud: 'SonarCloud'
+           organization: 'devops'
+           scannerMode: 'CLI'
+           configMode: 'manual'
+           cliProjectKey: 'devops-demo'
+           cliProjectName: 'DevOps Demo'
+           cliSources: '.'
+           extraProperties: |
+             sonar.sourceEncoding=UTF-8
+             sonar.sources=src
+             sonar.tests=src
+             sonar.exclusions=**/build/**,**/node_modules/**,**/public/libs/**,**/target/**,**/.tmp/**,**/*.spec.ts,**/*test.ts,**/*.js,**/polyfills.ts,**/*.module.ts,**/*.scss,**/src/environments/**,**/*main.ts,**/*.routing.ts
+             sonar.test.inclusions=**/*.spec.ts,**/*test.ts
+             sonar.javascript.lcov.reportPaths=./coverage/lcov.info
+             sonar.log.level=INFO
+             sonar.verbose=false
+             sonar.dynamicAnalysis=reuseReports
+       ################################
+       ### Run Static Code Analisys ###
+       ################################
+       - task: SonarCloudAnalyze@1
+         displayName: 'Run Static Code Analisys'
+       ###################################
+       ### Publish Quality Gate Result ###
+       ###################################
+       - task: SonarCloudPublish@1
+         displayName: 'Publish Quality Gate Result'
+         inputs:
+           pollingTimeoutSec: '300'
+       ####################################
+       ### Validate Quality Gate Result ###
+       ####################################
+       - task: sonarcloud-buildbreaker@2
+         displayName: 'Validate Quality Gate Result'
+         inputs:
+           SonarCloud: 'SonarCloud'
+           organization: 'devops'
+
+################################
+### CD (CONTINUOUS DELIVERY) ###
+################################
+
+- job: cd
+  displayName: 'CD (CONTINUOUS DELIVERY)'
+  dependsOn: 'ci'
+  condition: and(succeeded(), ne(variables['ENVIRONMENT'], ''))
+  pool: $(AZ_AGENT_POOL)
+  variables:
+    AWS_S3_SOURCE_FOLDER: '$(System.DefaultWorkingDirectory)/devops-demo'
+  steps:
+    ####################
+    ### Checkout SCM ###
+    ####################
+    - checkout: none
+      displayName: 'Skip Checkout SCM Again'
+    ################################
+    ### Download Build Artifacts ###
+    ################################
+    - task: DownloadBuildArtifacts@0
+      displayName: 'Download Build Artifacts'
+      inputs:
+        artifactName: 'devops-demo'
+        downloadPath: '$(System.DefaultWorkingDirectory)'
+   #####################
+   ### AWS S3 Upload ###
+   #####################
+   - task: S3Upload@1
+     displayName: 'Deploy to $(ENVIRONMENT) - AWS S3 Upload'
+     inputs:
+       awsCredentials: 'AWS'
+       regionName: '$(AWS_S3_REGION_NAME)'
+       bucketName: '$(AWS_S3_BUCKET_NAME)'
+       sourceFolder: '$(AWS_S3_SOURCE_FOLDER)'
+       globExpressions: '**'
+   ###############################
+   ### Cloudfront Invalidation ###
+   ###############################
+   - task: AWSCLI@1
+     displayName: 'Deploy to $(ENVIRONMENT) - AWS Cloudfront Invalidation'
+     inputs:
+       awsCredentials: 'AWS'
+       regionName: '$(AWS_S3_REGION_NAME)'
+       awsCommand: 'cloudfront'
+       awsSubCommand: 'create-invalidation'
+       awsArguments: '--distribution-id $(AWS_CLOUDFRONT_DISTRIBUTION_ID) --paths "/*"'

@@ -1,0 +1,18 @@
+---
+
+# Tasks file to "configure_resolvconf"
+
+ - name: "configure_resolvconf: Copy from base.j2 and head.j2 to {{ETC_RESOLVCONFD_DIR}}"
+   copy:
+     src={{item}}
+     dest={{ETC_RESOLVCONFD_DIR}}
+     owner=root
+     group=root
+     mode=0644
+   loop:
+     - files/base
+     - files/head
+
+ - name: "configure_resolvconf: Update resolv.conf"
+   shell:
+     resolvconf -u

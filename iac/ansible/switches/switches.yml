@@ -1,0 +1,34 @@
+---
+
+# Ansible Playbook for Switches
+
+- hosts: switches_all
+  connection: local
+  gather_facts: no
+
+  vars_prompt:
+  - name: "SW_USER"
+    prompt: "Switch Username"
+    private: no
+  - name: "SW_PASS"
+    prompt: "Switch Password"
+    private: yes
+  - name: "VLAN_NAME"
+    prompt: "VLAN Name"
+    private: no
+  - name: "VLAN_NUMBER"
+    prompt: "VLAN Number"
+    private: no
+
+  pre_tasks:
+
+#    - shell: echo 'pre-tasks'
+
+  roles:
+    - { role: switches_vlan }
+
+  tasks:
+#    - shell: echo 'tasks'
+
+  post_tasks:
+#    - shell: echo 'post-tasks'

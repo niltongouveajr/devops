@@ -1,0 +1,39 @@
+---
+
+# Tasks file to "install_packages"
+
+ - name: "install_packages: Run apt-get autoclean"
+   apt: autoclean=yes
+
+ - name: "install_packages: Run apt-get autoremove"
+   apt: autoremove=yes
+
+ - name: "install_packages: Install a packages list"
+   apt:
+     name:
+       - apt-transport-https
+       - bc
+       - build-essential
+       - ca-certificates
+       - curl
+       - elinks
+       - git-core
+       - jq
+       - ldap-utils
+       - net-tools
+       - nfs-kernel-server
+       - ntp
+       - ntpdate
+       - python
+       - python3
+       - resolvconf
+       - snmp
+       - snmpd
+       - snmp-mibs-downloader
+       - software-properties-common 
+       - tree
+       - vim
+       - xz-utils
+       - zip
+     state: present
+     update_cache: no

@@ -1,0 +1,67 @@
+variables:
+  - name: ENVIRONMENT
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+      value: 'dev'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      value: 'qa'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: 'prod'
+    ${{ if eq(variables['ENVIRONMENT'], '') }}:
+      value: ''
+  - name: BUILD_COMMAND
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+      value: 'ng build -c $(ENVIRONMENT)'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      value: 'ng build -c $(ENVIRONMENT)'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: 'ng build -c $(ENVIRONMENT)'
+    ${{ if eq(variables['ENVIRONMENT'], '') }}:
+      value: 'ng build'
+  - name: AWS_S3_BUCKET_NAME
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+      value: 'asus-logistica-pwa-dev'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      value: 'asus-logistica-pwa-qa'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: 'asus-logistica-pwa-prod'
+  - name: AWS_S3_REGION_NAME
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+      value: 'us-east-1'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      value: 'us-east-1'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: 'us-east-1'
+  - name: AWS_CLOUDFRONT_DISTRIBUTION_ID
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+      value: 'E3D4MZYYALZTZZ'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      value: 'E1I58RAOSPYMGH'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: 'E2ISC5YSZWJXMW'
+  - name: SKIP_ARCHIVE
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+      value: 'true'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      value: 'true'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: 'true'
+    ${{ if eq(variables['ENVIRONMENT'], '') }}:
+      value: 'true'
+  - name: SKIP_UNIT_TESTS
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+      value: 'true'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      value: 'true'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: 'true'
+    ${{ if eq(variables['ENVIRONMENT'], '') }}:
+      value: 'false'
+  - name: SKIP_STATIC_CODE_ANALISYS
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/development') }}:
+      value: 'true'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/qa') }}:
+      value: 'true'
+    ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+      value: 'true'
+    ${{ if eq(variables['ENVIRONMENT'], '') }}:
+      value: 'false'

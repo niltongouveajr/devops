@@ -1,0 +1,15 @@
+---
+
+# Main tasks file to "server_monitoring" role
+
+- import_tasks: "configure_snmp.yml"
+  tags: ["configure_snmp"]
+
+- import_tasks: "install_elastic_filebeat.yml"
+  tags: ["install_elastic_filebeat"]
+
+- import_tasks: "install_elastic_heartbeat.yml"
+  tags: ["install_elastic_heartbeat"]
+
+- import_tasks: "install_elastic_metricbeat.yml"
+  tags: ["install_elastic_metricbeat"]

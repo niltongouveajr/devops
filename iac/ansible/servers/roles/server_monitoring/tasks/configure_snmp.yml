@@ -1,0 +1,80 @@
+---
+
+# Tasks file for "configure_snmp"
+
+ - name: "configure_snmp: Check if snmp is already configured"
+   lineinfile:
+     path={{ETC_SNMP_FILE}}
+     state=absent
+     regexp='^rocommunity.*zabbix.*0.0.0.0/0'
+   check_mode: true
+   changed_when: false
+   register: check
+
+ - name: "configure_snmp: Copy from snmpd.conf.j2 to {{ETC_SNMP_FILE}}"
+   template:
+     src=templates/snmpd.conf.j2
+     dest={{ETC_SNMP_FILE}}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+   #when: check.found == 0
+
+ - name: "configure_hosts_file: Remove old backups"
+   shell: |
+     find /etc/snmp -maxdepth 1 -name "snmpd.conf.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc/snmp -maxdepth 1 -name "snmpd.conf.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+   #when: check.found == 0
+
+ - name: "configure_snmp: Copy from snmp_check_internet.sh.j2 to {{USR_LOCAL_BIN_PATH}}"
+   template:
+     src=templates/snmp_check_internet.sh.j2
+     dest={{USR_LOCAL_BIN_PATH}}/{{ HOST_NAME }}_check_internet.sh
+     owner=root
+     group=root
+     mode=0755
+     force=no
+
+ - name: "configure_snmp: Copy from snmp_nfs_config.sh.j2 to {{USR_LOCAL_BIN_PATH}}"
+   template:
+     src=templates/snmp_nfs_config.sh.j2
+     dest={{USR_LOCAL_BIN_PATH}}/{{ HOST_NAME }}_nfs_config.sh
+     owner=root
+     group=root
+     mode=0755
+     force=no
+
+ - name: "configure_snmp: Copy from snmp_ram_memory_percent_used.sh.j2 to {{USR_LOCAL_BIN_PATH}}"
+   template:
+     src=templates/snmp_ram_memory_percent_used.sh.j2
+     dest={{USR_LOCAL_BIN_PATH}}/{{ HOST_NAME }}_ram_memory_percent_used.sh
+     owner=root
+     group=root
+     mode=0755
+     force=no
+
+ - name: "configure_snmp: Copy from snmp_root_partition_percent_used.sh.j2 to {{USR_LOCAL_BIN_PATH}}"
+   template:
+     src=templates/snmp_root_partition_percent_used.sh.j2
+     dest={{USR_LOCAL_BIN_PATH}}/{{ HOST_NAME }}_root_partition_percent_used.sh
+     owner=root
+     group=root
+     mode=0755
+     force=no
+
+ - name: "configure_snmp: Copy from snmp_uptime.sh.j2 to {{USR_LOCAL_BIN_PATH}}"
+   template:
+     src=templates/snmp_uptime.sh.j2
+     dest={{USR_LOCAL_BIN_PATH}}/{{ HOST_NAME }}_uptime.sh
+     owner=root
+     group=root
+     mode=0755
+     force=no
+
+ - name: "configure_snmp: Ensures snmpd service is restarted"
+   service:
+     name=snmpd
+     state=restarted
+   #when: check.found == 0

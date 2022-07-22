@@ -1,0 +1,105 @@
+#!/bin/bash
+
+# Author: Nilton R Gouvea Junior
+
+# Variables
+
+read oldrev newrev refname
+
+repos=`pwd`
+rev=`echo $newrev | awk '{print substr ($0, 0, 8)}'`
+log=`git log --pretty=format:"%B" -n 1 $rev 2>/dev/null`
+author=`git log --oneline --pretty="%an" -n 1 $rev 2>/dev/null`
+date=`date +"%Y-%m-%d %H:%M:%S %z (%a, %d %b %Y)"`
+propfile="/srv/config/hooks/gitlab-hooks/conf/properties.cfg"
+
+if [ -f "${propfile}" ] ; then
+  source ${propfile}
+fi
+
+###############################
+### INTEGRATION ACTIVATIONS ###
+###############################
+
+# 0 -> disabled
+# 1 -> enabled
+
+CHECKLOG=1
+CHECKSIZE=1
+JIRA=0
+
+checklog="5"
+checksize="50"
+checksizebytes="$((${checksize}*1024*1024))"
+jirakey="PRJ"
+
+#######################################
+### IGNORE BRANCH CREATION/DELETION ###
+#######################################
+
+# Branch create
+if [[ "${oldrev}" == "0000000000000000000000000000000000000000" ]]; then
+  exit 0
+fi
+
+# Branch delete
+if [[ "${newrev}" == "0000000000000000000000000000000000000000" ]]; then
+  exit 0
+fi
+
+#################
+### CHECK LOG ###
+#################
+
+if [[ "${CHECKLOG}" -eq "1" ]]; then
+  if [[ `echo "${log}" | wc -c` -lt "${checklog}" ]]; then
+    echo ""
+    echo "GL-HOOK-ERR: [ ERROR ] The log message must have at least ${checklog} characters."
+    echo "Please discuss with the DevOps Team if you disagree with this rule."
+    echo ""
+    echo "For more info about Software Development Tools,"
+    echo "new requests or statistics, please visit: https://devops.local"
+    echo ""
+    exit 1
+  fi
+fi
+
+##################
+### CHECK SIZE ###
+##################
+
+if [ "${CHECKSIZE}" -eq "1" ]; then
+  for file in $(git diff --stat --name-only --diff-filter=ACMRT ${oldrev}..${newrev}); do
+    size=$(git cat-file -s ${newrev}:${file})
+    if [ ! -z ${size} ]; then
+      if [ "${size}" -gt "${checksizebytes}" ]; then
+         echo ""
+         echo "GL-HOOK-ERR: [ ERROR ] Your push contains files larger than ${checksize} Mb."
+         echo "Please discuss with the DevOps Team the best place to store these files."
+         echo ""
+         echo "For more info about Software Development Tools,"
+         echo "new requests or statistics, please visit: https://devops.local"
+         echo ""
+        exit 1
+      fi
+    fi
+  done
+fi
+
+########################
+### JIRA INTEGRATION ###
+########################
+
+if [[ "${JIRA}" -eq "1" ]]; then
+  if [[ -z `echo "${log}" | grep "^\[${jirakey}-[0-9].*] .*"` ]] && [[ -z `echo "${log}" | grep "^\[DEVOPS] .*"` ]]; then
+    echo ""
+    echo "GL-HOOK-ERR: [ ERROR ] At least one open ticket must be mentioned in the log message."
+    echo "Jira Example: \$ git commit -m \"[${jirakey}-123] First commit\""
+    echo "Tell the DevOps Team if this integration should be disabled."
+    echo ""
+    echo "For more info about Software Development Tools,"
+    echo "new requests or statistics, please visit: https://devops.local"
+    echo ""
+    exit 1
+  fi
+fi

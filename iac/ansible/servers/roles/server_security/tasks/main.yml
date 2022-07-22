@@ -1,0 +1,15 @@
+---
+
+# Main tasks file to "server_security" role
+
+- import_tasks: "change_banner.yml"
+  tags: ["change_banner"]
+
+- import_tasks: "update_sshd_config_file.yml"
+  tags: ["update_sshd_config_file"]
+
+- import_tasks: "fix_ssh_diffie_hellman.yml"
+  tags: ["fix_ssh_diffie_hellman"]
+
+- import_tasks: "increase_network_security.yml"
+  tags: ["increase_network_security"]

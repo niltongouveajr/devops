@@ -1,0 +1,49 @@
+---
+
+# Tasks file to "install_elastic_metricbeat"
+
+ - name: "install_elastic_metricbeat: Install metricbeat package"
+   apt:
+     deb=https://artifacts.elastic.co/downloads/beats/metricbeat/metricbeat-7.13.4-amd64.deb
+
+ - name: "install_elastic_metricbeat: Copy from metricbeat.yml.j2 to {{ETC_METRICBEAT_FILE}}"
+   template:
+     src=templates/metricbeat.yml.j2
+     dest={{ETC_METRICBEAT_FILE}}
+     owner=root
+     group=root
+     mode=0600
+     backup=yes
+
+ - name: "install_elastic_metricbeat: Remove old backups"
+   shell: |
+     find /etc/metricbeat -maxdepth 1 -name "metricbeat.yml.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc/metricbeat -maxdepth 1 -name "metricbeat.yml.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "install_elastic_metricbeat: Enable metricbeat modules"
+   shell: |
+     metricbeat modules enable system
+     metricbeat modules enable kibana-xpack
+
+ - name: "install_elastic_metricbeat: Copy from kibana-xpack.yml.j2 to {{ETC_METRICBEAT_KIBANAXPACK_FILE}}"
+   template:
+     src=templates/kibana-xpack.yml.j2
+     dest={{ETC_METRICBEAT_KIBANAXPACK_FILE}}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+
+ - name: "install_elastic_metricbeat: Remove old backups"
+   shell: |
+     find /etc/metricbeat/modules.d -maxdepth 1 -name "kibana-xpack.yml.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc/metricbeat/modules.d -maxdepth 1 -name "kibana-xpack.yml.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "install_elastic_metricbeat: Enable metricbeat service"
+   systemd:
+     name=metricbeat
+     daemon_reload=yes
+     enabled=yes
+     state=restarted

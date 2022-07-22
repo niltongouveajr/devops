@@ -1,0 +1,40 @@
+FROM ubuntu:20.04
+
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+
+ENV TARGETARCH=linux-x64
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Packages
+RUN echo "APT::Get::Assume-Yes \"true\";" > /etc/apt/apt.conf.d/90assumeyes
+RUN apt-get update && apt-get install -y --no-install-recommends apt-utils
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    iputils-ping \
+    jq \
+    libicu* \
+    libssl1.0 \
+    libunwind8 \
+    netcat \
+    unzip \
+    wget \
+    zip \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install AZ CLI
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+RUN echo "AZURE_EXTENSION_DIR=/usr/local/lib/azureExtensionDir" | tee -a /etc/environment \
+    && mkdir -p /usr/local/lib/azureExtensionDir
+
+WORKDIR /azp
+
+RUN mkdir ./patches
+COPY ./patches/AgentService.js ./patches/
+COPY ./start.sh .
+COPY ./start-once.sh .
+RUN chmod +x start.sh
+RUN chmod +x start-once.sh
+
+CMD ["./start-once.sh"]

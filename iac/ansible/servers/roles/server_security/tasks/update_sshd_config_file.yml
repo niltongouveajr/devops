@@ -1,0 +1,36 @@
+---
+
+# Tasks file to "update_sshd_config_file"
+
+ - name: "update_sshd_config_file: Copy from sshd_config.j2 to {{ETC_SSH_SSHD_CONFIG_FILE}}"
+   template:
+     src=templates/sshd_config.j2
+     dest={{ETC_SSH_SSHD_CONFIG_FILE}}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+
+ - name: "update_sshd_config_file: Remove old backups"
+   shell: |
+     find /etc/ssh -maxdepth 1 -name "sshd_config.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc/ssh -maxdepth 1 -name "sshd_config.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "update_sshd_config_file: Fix {{ETC_PAMD_SSHD_FILE}}"
+   replace: 
+     dest={{ETC_PAMD_SSHD_FILE}}
+     regexp="session.*.pam_motd.so*"
+     replace="#session.*.pam_motd.so*"
+     backup=yes
+
+ - name: "update_sshd_config_file: Remove old backups"
+   shell: |
+     find /etc/pam.d -maxdepth 1 -name "sshd.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc/pam.d -maxdepth 1 -name "sshd.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "update_sshd_config_file: Ensures ssh service is restarted"
+   service:
+     name=ssh
+     state=restarted

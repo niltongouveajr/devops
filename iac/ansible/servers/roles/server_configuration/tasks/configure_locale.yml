@@ -1,0 +1,26 @@
+---
+
+# Tasks file to "configure_locale"
+
+ - name: "configure_locale: Generate locale"
+   shell:
+     locale-gen en_US en_US.UTF-8 pt_BR.UTF-8
+
+ - name: "configure_locale: Copy from locale.j2 to {{ETC_DEFAULT_LOCALE_FILE}}"
+   template:
+     src=templates/locale.j2
+     dest={{ETC_DEFAULT_LOCALE_FILE}}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+
+ - name: "configure_locale: Remove old backups"
+   shell: |
+     find /etc/default -maxdepth 1 -name "locale.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc/default -maxdepth 1 -name "locale.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "configure_locale: Read new locale"
+   shell:
+     . /etc/default/locale

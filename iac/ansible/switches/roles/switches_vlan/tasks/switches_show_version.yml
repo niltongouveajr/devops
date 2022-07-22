@@ -1,0 +1,19 @@
+---
+
+# Task file to "switches_show_version"
+
+- name: "Get switch version"
+  telnet:
+    user: "{{ SW_USER }}"
+    password: "{{ SW_PASS }}"
+    login_prompt: "Username: "
+    prompts:
+      - "[>|#]"
+    command:
+      - terminal length 0
+      - show version
+  register: switch_version
+
+- name: "Print switch version"
+  debug:
+    var: switch_version.output

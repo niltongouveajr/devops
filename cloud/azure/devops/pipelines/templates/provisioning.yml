@@ -1,0 +1,33 @@
+jobs:
+
+####################
+### PROVISIONING ###
+####################
+
+- job: provisioning
+  displayName: PROVISIONING
+  pool: $(AZ_EDA_POOL)
+  steps:
+  #####################################
+  ### Create Ephemeral Docker Agent ###
+  #####################################
+  - task: AzureContainerAgentCreate@0
+    displayName: 'Create Ephemeral Docker Agent'
+    inputs:
+      azureSubscription: $(AZ_EDA_SUBSCRIPTION)
+      resourceGroupName: $(AZ_EDA_RESOURCE_GROUP_NAME)
+      location: $(AZ_EDA_LOCATION)
+      azureDevOpsToken: $(AZ_EDA_DEVOPS_TOKEN)
+      containerRegistry: $(AZ_EDA_CONTAINER_REGISTRY)
+      imageName: $(AZ_EDA_IMAGE_NAME)
+      agentPool: $(AZ_EDA_AGENT_POOL)
+      agentPrefix: $(AZ_EDA_AGENT_PREFIX)
+      vnetResourceGroupName: $(AZ_EDA_VNET_RESOURCE_GROUP_NAME)
+      vnetName: $(AZ_EDA_VNET_NAME)
+      subnetName: $(AZ_EDA_SUBNET_NAME)
+      timeoutAgentOnline: $(AZ_EDA_TIMEOUT_AGENT_ONLINE)
+      osType: $(AZ_EDA_OS_TYPE)
+      CPU: $(AZ_EDA_CPU)
+      memory: $(AZ_EDA_MEMORY)
+      skipContainerDeletionOnError: $(AZ_EDA_SKIP_CONTAINER_DELETION)
+      useGlobalConfig: $(AZ_EDA_USE_GLOBAL_CONFIG)

@@ -1,0 +1,4 @@
+https://piraces.dev/posts/azure-ephemeral-pipelines-agents
+https://github.com/microsoft/azure-pipelines-ephemeral-agents
+https://www.fixedbuffer.com/azure-devops-ephimeral-agents-agentes-de-usar-y-tirar
+https://marketplace.visualstudio.com/items?itemName=tiago-pascoal.EphemeralPipelinesAgents

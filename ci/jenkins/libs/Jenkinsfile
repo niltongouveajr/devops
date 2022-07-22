@@ -1,0 +1,254 @@
+#!/usr/bin/env groovy
+
+/**
+ * Importing common Libs
+ * All shared libraries are available in the repository:
+ * https://gitlab.domain.local/shared/ci-utils/jenkins
+ */
+@Library('SharedLibs')_
+
+/**
+ * Build and Project settings
+ */
+env.BuildPath = "."
+
+/**
+ * Git settings
+ */
+env.GitURL = "https://gitlab.domain.local/<project_customer>/<project_group>/<project_name>"
+env.GitCredentials = "<git_credentials>"
+
+/**
+ * Jira settings
+ */
+env.JiraKey = "<jira_key>"
+env.JiraJQL = "PROJECT = '${JiraKey}' and (status = Finished and (issuetype = Bug OR issuetype = Improvement OR issuetype = Story) or (issuetype = Story and status = Done)) and Sprint in openSprints() and created > startOfYear() and 'Integrated Version' is EMPTY ORDER BY Rank ASC"
+env.JiraTransitionId = "201"
+
+/**
+ * Notification settings
+ */
+env.EmailRecipients = "<notification_email_recipients>"
+env.TeamsWebHook = "<notification_teams_webhook>"
+
+/**
+ * Rancher and Docker settings
+ * For tips to configure variables below, see:
+ * - https://devops.domain.local/site/pages/rancher
+ * - https://devops.domain.local/site/pages/docker
+ */
+env.RancherUser = "<rancher_user>"
+env.RancherToken = "<rancher_token>"
+env.RancherServer = "https://rancher.domain.local/k8s/clusters/c-n7f8h"
+env.RancherCluster = "devops"
+env.RancherSecret = "devops"
+
+/**
+ * Tools variables configurations
+ */
+env.AntVersion = "1.10.5"
+env.DotNETVersion = "3.1"
+env.GradleVersion = "4.9"
+env.JdkVersion = "8"
+env.MavenVersion = "3.5.4"
+env.MSBuildVersion = "16.7.0.37604"
+env.NodeVersion = "default"
+
+/**
+ * Sonar settings
+ */
+env.SonarProjectKey = "<sonar_project_key>"
+env.SonarMinPercentage = "30"
+env.SonarExclusions = "**/*.tmp"
+
+/**
+ * Main pipeline definition
+ */
+pipeline {
+    agent { label 'pipeline' }
+    /** Available agents:
+     * Mac OS  = mac
+     * Ubuntu  = pipeline
+     * Windows = win
+     */
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '5', artifactDaysToKeepStr: ''))
+        disableConcurrentBuilds()
+        skipStagesAfterUnstable()
+        ansiColor('xterm')
+        timeout(time: 1, unit: 'HOURS')
+    }
+
+    environment {
+        //ENV_VARS_DEBUG = EnvVarsDebug()
+        ENV_VARS_DEFAULT = EnvVarsDefault()
+    }
+
+    //tools {
+        //ant "ant-${AntVersion}"
+        //gradle "gradle-${GradleVersion}"
+        //jdk "jdk${JdkVersion}"
+        //maven "maven-${MavenVersion}"
+        //msbuild "msbuild-${MSBuildVersion}"
+    //}
+
+    stages {
+
+        stage('Prepare') {
+            steps {
+                echo "Clonning repository... [${env.GitURL}]"
+                GitClone()
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir(BuildPath) {
+                    echo "Performing installation and build process..."
+                    // Build Commands...
+                }
+            }
+        }
+
+        stage('Unitary Tests') {
+            steps {
+                dir(BuildPath) {
+                    echo "Running Unit Tests"
+                    // Tests Commands...
+                }
+            }
+        }
+
+        stage('Static Analysis') {
+            steps {
+                dir(BuildPath) {
+                    echo "Running lint tools"
+                    // Static Analysis Commands...
+                }
+                script {
+                    if (fileExists ('sonar-project.properties')) {
+                        echo "Running static analysis tool"
+                        SonarQube()
+                        SonarQubeQualityGate()
+                    }
+                }
+            }
+        }
+
+        stage('Delivery to Dev') {
+            when {
+                expression {
+                    return "${env.gitlabSourceBranch}".startsWith('development')
+                }
+            }
+            steps {
+                // ATTENTION: Do not remove the lib within the script tag below. It's used to get some DevOps metrics and KPI related to deliveries.
+                // This stage was created from a template. If it's not necessary, please remove it completely. Allowed values for DeliveryEnvironment variable: 
+                // development, qa, homologation, staging, sit, production 
+                script {
+                    env.DeliveryEnvironment = "development"
+                    DeliveryTracking("${env.DeliveryEnvironment}")
+                }
+                dir(BuildPath) {
+                    // Delivery to Dev Commands...
+                    //script {
+                        //EmailNotificationDelivery()
+                        //TeamsNotificationDelivery()                        
+                    //}
+                }
+            }
+        }
+ 
+        stage('Delivery to QA') {
+            when {
+                expression {
+                    return "${env.gitlabSourceBranch}".startsWith('refs/tags/qa-')
+                }
+            }
+            steps {
+                // ATTENTION: Do not remove the lib within the script tag below. It's used to get some DevOps metrics and KPI related to deliveries.
+                // This stage was created from a template. If it's not necessary, please remove it completely. Allowed values for DeliveryEnvironment variable: 
+                // development, qa, homologation, staging, sit, production 
+                script {
+                    env.DeliveryEnvironment = "qa"
+                    DeliveryTracking("${env.DeliveryEnvironment}")
+                }           
+                dir(BuildPath) {
+                    // Delivery to QA Commands...
+                    script {
+                        TagName = "${env.gitlabSourceBranch}"
+                        TagName = TagName.replaceAll "refs/tags/", ""
+                        currentBuild.displayName = "${TagName}"
+                        currentBuild.setKeepLog(true)
+                        //JiraIntegratedVersion()
+                        EmailNotificationDelivery()
+                        //TeamsNotificationDelivery()                        
+                    }
+                }
+            }
+        }
+
+        stage('Delivery to Prod') {
+            when {
+                expression {
+                    return "${env.gitlabSourceBranch}".startsWith('refs/tags/prod-')
+                }
+            }
+            steps {
+                // ATTENTION: Do not remove the lib within the script tag below. It's used to get some DevOps metrics and KPI related to deliveries.
+                // This stage was created from a template. If it's not necessary, please remove it completely. Allowed values for DeliveryEnvironment variable: 
+                // development, qa, homologation, staging, sit, production 
+                script {
+                    env.DeliveryEnvironment = "production"
+                    DeliveryTracking("${env.DeliveryEnvironment}")
+                }            
+                dir(BuildPath) {
+                    // Delivery to Prod Commands...
+                    script {
+                        TagName = "${env.gitlabSourceBranch}"
+                        TagName = TagName.replaceAll "refs/tags/", ""
+                        currentBuild.displayName = "${TagName}"
+                        currentBuild.setKeepLog(true)
+                        EmailNotificationDelivery()
+                        //JiraIntegratedVersion()
+                        //TeamsNotificationDelivery()                        
+                    }
+                }
+            }
+        }
+
+    }
+
+    post {
+        failure {
+            script {
+                currentBuild.result = 'FAILURE'
+            }
+            updateGitlabCommitStatus name: 'build', state: 'failed'
+            EmailNotification()
+            //TeamsNotification()
+        }
+        success {
+            script {
+                currentBuild.result = 'SUCCESS'
+            }
+            updateGitlabCommitStatus name: 'build', state: 'success'
+            //EmailNotification()
+            //TeamsNotification()
+        }
+        changed {
+            script {
+                if (currentBuild.currentResult == 'SUCCESS') {
+                    currentBuild.result = 'SUCCESS'
+                    EmailNotification()
+                    //TeamsNotification()
+                }
+            }
+        }
+        always {
+            logstashSend failBuild: false, maxLines: 3000
+            cleanWs()
+        }
+    }
+}

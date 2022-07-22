@@ -1,0 +1,11 @@
+---
+
+# Tasks file to "fix_ssh_diffie_hellmann"
+
+ - name: "fix_ssh_diffie_hellmann: Copy from template config to {{VAR_LIB_HUDSON_SSH_PATH}}"
+   copy:
+     src=files/config
+     dest={{VAR_LIB_HUDSON_SSH_PATH}}
+     owner=hudson
+     group=hudson
+     mode=0700

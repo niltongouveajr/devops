@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Nilton Gouvea
+  description:
+  license: BSD
+  min_ansible_version: 2.0
+  platforms:
+  - name: Generic
+    versions:
+    - all
+    - any
+  categories:
+  - cisco
+  - ios

@@ -1,0 +1,17 @@
+storage_mode("git")
+clone_branch_directly(false)
+readonly(true)
+generate_apple_certs(false)
+skip_provisioning_profiles(false)
+
+app_identifier(ENV['FASTLANE_APP_IDENTIFIER'])
+username(ENV['FASTLANE_APPLE_ID'])
+team_id(ENV['FASTLANE_TEAM_ID'])
+
+git_url(ENV['MATCH_GIT_URL'])
+git_branch(ENV['MATCH_GIT_BRANCH'])
+
+keychain_name(ENV['MATCH_KEYCHAIN_NAME'])
+keychain_password(ENV['MATCH_KEYCHAIN_PASS'])
+
+type(ENV['MATCH_EXPORT_TYPE'])

@@ -1,0 +1,29 @@
+---
+
+# Tasks file to "configure_hosts_file"
+
+ - name: "configure_hosts_file: Copy from hosts.j2 to {{ETC_HOSTS_FILE}}"
+   template:
+     src=templates/hosts.j2
+     dest={{ETC_HOSTS_FILE}}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+
+ - name: "configure_hosts_file: Remove old backups"
+   shell: |
+     find /etc -maxdepth 1 -name "hosts.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc -maxdepth 1 -name "hosts.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "configure_hosts_file: Get network ip address"
+   shell:
+     ip addr | grep inet | grep brd | head -n 1 | awk '{print $2}' | sed "s|/.*||g"
+   register: GET_NETWORK_IP
+
+ - name: "configure_hosts_file: Comment IP line in {{ETC_HOSTS_FILE}}"
+   replace:
+     dest={{ETC_HOSTS_FILE}}
+     regexp='(\s+){{GET_NETWORK_IP.stdout}}(\s+.*)?$'
+     replace='\1#{{GET_NETWORK_IP.stdout}}\2'

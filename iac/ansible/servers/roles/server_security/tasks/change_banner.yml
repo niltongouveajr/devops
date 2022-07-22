@@ -1,0 +1,28 @@
+---
+
+# Tasks file to "change_banner"
+
+ - name: "change_banner: Copy from issue.j2 to {{ETC_ISSUE_FILE}} and {{ETC_ISSUE_NET_FILE}}"
+   template:
+     src=templates/issue.j2
+     dest={{ item }}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+   loop:
+     - "{{ETC_ISSUE_FILE}}"
+     - "{{ETC_ISSUE_NET_FILE}}"
+
+ - name: "change_banner: Remove old backups"
+   shell: |
+     find /etc -maxdepth 1 -name "issue.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc -maxdepth 1 -name "issue.bck*" -type f -print0 | xargs rm
+     find /etc -maxdepth 1 -name "issue.net.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc -maxdepth 1 -name "issue.net.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "change_banner: Set permission in /etc/update-motd.d directory"
+   file:
+     path=/etc/update-motd.d
+     mode=0755

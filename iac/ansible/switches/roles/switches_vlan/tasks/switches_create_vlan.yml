@@ -1,0 +1,23 @@
+---
+
+# Task file to "switches_create_vlan"
+
+- name: "Create VLAN"
+  telnet:
+    user: "{{ SW_USER }}"
+    password: "{{ SW_PASS }}"
+    login_prompt: "Username: "
+    prompts:
+      - "[>|#]"
+    command:
+      - configure terminal
+      - vlan {{ VLAN_NUMBER }}
+      - name {{ VLAN_NAME }}
+      - exit
+      - exit
+      - wr
+  register: create_vlan 
+
+- name: "Print output"
+  debug:
+    var: create_vlan.output

@@ -1,0 +1,43 @@
+trigger:
+  branches:
+    include:
+      - '*'
+  tags:
+    include:
+      - '*'
+  paths:
+    exclude:
+      - 'README.md'
+
+variables:
+  - group: 'Ephemeral Docker Agent'
+
+jobs:
+
+- template: templates/provisioning.yml
+
+################################### 
+### CI (CONTINUOUS INTEGRATION) ###
+###################################
+
+- job: ci
+  displayName: 'CI (CONTINUOUS INTEGRATION)'
+  dependsOn: provisioning
+  condition: succeeded()
+  pool: $(AZ_EDA_AGENT_POOL)
+  variables:
+    DotNETCoreVersion: '6.0.101'
+    NodeVersion: '14.x'
+    npm_config_cache: '$(Pipeline.Workspace)/.npm'
+  steps:
+    ####################
+    ### Checkout SCM ###
+    ####################
+    - checkout: self
+      displayName: 'Checkout SCM'
+      clean: true
+      fetchDepth: 1
+    ####################
+    ### Hello World! ###
+    ####################
+    - template: templates/helloworld.yml

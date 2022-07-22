@@ -1,0 +1,38 @@
+---
+
+# Tasks file to "increase_network_security"
+
+ - name: "increase_network_security: Copy from sysctl.conf.j2 to {{ETC_SYSCTL_FILE}}"
+   template:
+     src=templates/sysctl.conf.j2
+     dest={{ETC_SYSCTL_FILE}}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+
+ - name: "increase_network_security: Remove old backups"
+   shell: |
+     find /etc -maxdepth 1 -name "sysctl.conf.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc -maxdepth 1 -name "sysctl.conf.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "increase_network_security: Apply sysctl configuration"
+   shell: |
+     modprobe ip_conntrack
+     sysctl -p /etc/sysctl.conf
+
+ - name: "increase_network_security: Copy from host.conf.j2 to {{ETC_HOST_FILE}}"
+   template:
+     src=templates/host.conf.j2
+     dest={{ETC_HOST_FILE}}
+     owner=root
+     group=root
+     mode=0644
+     backup=yes
+
+ - name: "increase_network_security: Remove old backups"
+   shell: |
+     find /etc -maxdepth 1 -name "host.conf.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc -maxdepth 1 -name "host.conf.bck*" -type f -print0 | xargs rm
+   ignore_errors: true

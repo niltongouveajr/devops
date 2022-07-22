@@ -1,0 +1,18 @@
+---
+
+# Main tasks file for "server_configuration" role
+
+- import_tasks: "configure_date_and_time.yml"
+  tags: ["configure_date_and_time"]
+
+- import_tasks: "configure_hosts_file.yml"
+  tags: ["configure_hosts_file"]
+
+- import_tasks: "configure_locale.yml"
+  tags: ["configure_locale"]
+
+- import_tasks: "configure_multipath.yml"
+  tags: ["configure_multipath"]
+
+- import_tasks: "configure_resolvconf.yml"
+  tags: ["configure_resolvconf"]

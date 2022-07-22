@@ -1,0 +1,29 @@
+---
+
+# Tasks file to "install_elastic_filebeat"
+
+ - name: "install_elastic_filebeat: Install filebeat package"
+   apt:
+     deb=https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.13.4-amd64.deb
+
+ - name: "install_elastic_filebeat: Copy from filebeat.yml.j2 to {{ETC_FILEBEAT_FILE}}"
+   template:
+     src=templates/filebeat.yml.j2
+     dest={{ETC_FILEBEAT_FILE}}
+     owner=root
+     group=root
+     mode=0600
+     backup=yes
+
+ - name: "install_elastic_filebeat: Remove old backups"
+   shell: |
+     find /etc/filebeat -maxdepth 1 -name "filebeat.yml.*@*~" -type f -print0 | xargs -0r ls -1t | tail -n+2 | xargs -rd '\n' rm
+     find /etc/filebeat -maxdepth 1 -name "filebeat.yml.bck*" -type f -print0 | xargs rm
+   ignore_errors: true
+
+ - name: "install_elastic_filebeat: Enable filebeat service"
+   systemd:
+     name=filebeat
+     daemon_reload=yes
+     enabled=yes
+     state=restarted
